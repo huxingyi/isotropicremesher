@@ -21,6 +21,7 @@
  */
 #ifndef HALFEDGE_MESH_H
 #define HALFEDGE_MESH_H
+#include <set>
 #include "vector3.h"
 
 class HalfedgeMesh
@@ -68,6 +69,8 @@ public:
     bool testLengthSquaredAroundVertex(Vertex *vertex, 
         const Vector3 &target, 
         double maxEdgeLengthSquared);
+    void collectVerticesAroundVertex(Vertex *vertex,
+        std::set<Vertex *> &vertices);
     Face *moveToNextFace(Face *face);
     Vertex *moveToNextVertex(Vertex *vertex);
     void changeVertexStartHalfedgeFrom(Vertex *vertex, Halfedge *halfedge);
