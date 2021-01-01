@@ -77,7 +77,7 @@ int main(int argc, char **argv)
     std::vector<std::vector<size_t>> inputTriangles;
     
     //loadObj("C:\\Users\\Jeremy\\Repositories\\solidboolean\\test\\cases\\simple-ring\\b.obj", inputVertices, inputTriangles);
-    loadObj("C:\\Users\\Jeremy\\Repositories\\solidboolean\\test\\cases\\addax-and-meerkat\\a.obj", inputVertices, inputTriangles);
+    loadObj("C:\\Users\\Jeremy\\Repositories\\solidboolean\\test\\cases\\screwdriver\\a.obj", inputVertices, inputTriangles);
     
     IsotropicRemesher isotropicRemesher(&inputVertices, &inputTriangles);
     isotropicRemesher.remesh(1);

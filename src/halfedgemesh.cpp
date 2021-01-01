@@ -33,41 +33,17 @@ HalfedgeMesh::HalfedgeMesh(const std::vector<Vector3> &vertices,
     std::vector<Vertex *> halfedgeVertices;
     halfedgeVertices.reserve(vertices.size());
     for (const auto &it: vertices) {
-        Vertex *vertex = new Vertex;
+        Vertex *vertex = newVertex();
         vertex->position = it;
         halfedgeVertices.push_back(vertex);
-    }
-    
-    for (size_t vertexIndex = 1; vertexIndex < halfedgeVertices.size(); ++vertexIndex) {
-        auto &previous = halfedgeVertices[vertexIndex - 1];
-        auto &current = halfedgeVertices[vertexIndex];
-        current->previousVertex = previous;
-        previous->nextVertex = current;
-    }
-    
-    if (!halfedgeVertices.empty()) {
-        m_firstVertex = halfedgeVertices.front();
-        m_lastVertex = halfedgeVertices.back();
     }
     
     std::vector<Face *> halfedgeFaces;
     halfedgeFaces.reserve(faces.size());
     for (const auto &it: faces) {
-        Face *face = new Face;
+        Face *face = newFace();
         face->debugIndex = ++m_debugFaceIndex;
         halfedgeFaces.push_back(face);
-    }
-    
-    if (!halfedgeFaces.empty()) {
-        m_firstFace = halfedgeFaces.front();
-        m_lastFace = halfedgeFaces.back();
-    }
-    
-    for (size_t faceIndex = 1; faceIndex < halfedgeFaces.size(); ++faceIndex) {
-        auto &previous = halfedgeFaces[faceIndex - 1];
-        auto &current = halfedgeFaces[faceIndex];
-        current->previousFace = previous;
-        previous->nextFace = current;
     }
 
     std::unordered_map<uint64_t, Halfedge *> halfedgeMap;
@@ -84,15 +60,15 @@ HalfedgeMesh::HalfedgeMesh(const std::vector<Vector3> &vertices,
             const auto &second = indices[j];
             
             Vertex *vertex = halfedgeVertices[first];
-            Halfedge *halfedge = new Halfedge;
+            Halfedge *halfedge = newHalfedge();
             halfedge->startVertex = vertex;
             halfedge->leftFace = halfedgeFaces[faceIndex];
             
             if (nullptr == halfedge->leftFace->halfedge) {
                 halfedge->leftFace->halfedge = halfedge;
-                if (nullptr == vertex->firstHalfedge) {
-                    vertex->firstHalfedge = halfedge;
-                }
+            }
+            if (nullptr == vertex->firstHalfedge) {
+                vertex->firstHalfedge = halfedge;
             }
             
             halfedges[i] = halfedge;
@@ -131,8 +107,10 @@ void HalfedgeMesh::updateFaceHalfedgesLeftFace(std::vector<HalfedgeMesh::Halfedg
 
 void HalfedgeMesh::linkHalfedgePair(HalfedgeMesh::Halfedge *first, HalfedgeMesh::Halfedge *second)
 {
-    first->oppositeHalfedge = second;
-    second->oppositeHalfedge = first;
+    if (nullptr != first)
+        first->oppositeHalfedge = second;
+    if (nullptr != second)
+        second->oppositeHalfedge = first;
 }
 
 double HalfedgeMesh::averageEdgeLength()
@@ -170,6 +148,7 @@ HalfedgeMesh::Face *HalfedgeMesh::newFace()
 HalfedgeMesh::Vertex *HalfedgeMesh::newVertex()
 {
     Vertex *vertex = new Vertex;
+    vertex->debugIndex = ++m_debugVertexIndex;
     if (nullptr != m_lastVertex) {
         m_lastVertex->nextVertex = vertex;
         vertex->previousVertex = m_lastVertex;
@@ -178,6 +157,13 @@ HalfedgeMesh::Vertex *HalfedgeMesh::newVertex()
     }
     m_lastVertex = vertex;
     return vertex;
+}
+
+HalfedgeMesh::Halfedge *HalfedgeMesh::newHalfedge()
+{
+    Halfedge *halfedge = new Halfedge;
+    halfedge->debugIndex = ++m_debugHalfedgeIndex;
+    return halfedge;
 }
 
 HalfedgeMesh::Face *HalfedgeMesh::moveToNextFace(HalfedgeMesh::Face *face)
@@ -226,8 +212,8 @@ void HalfedgeMesh::breakFace(HalfedgeMesh::Face *leftOldFace,
     leftNewFace->halfedge = leftFaceHalfedges[2];
     leftFaceHalfedges[2]->leftFace = leftNewFace;
     
-    leftNewFaceHalfedges.push_back(new Halfedge);
-    leftNewFaceHalfedges.push_back(new Halfedge);
+    leftNewFaceHalfedges.push_back(newHalfedge());
+    leftNewFaceHalfedges.push_back(newHalfedge());
     leftNewFaceHalfedges.push_back(leftFaceHalfedges[2]);
     linkFaceHalfedges(leftNewFaceHalfedges);
     updateFaceHalfedgesLeftFace(leftNewFaceHalfedges, leftNewFace);
@@ -236,7 +222,7 @@ void HalfedgeMesh::breakFace(HalfedgeMesh::Face *leftOldFace,
     
     leftOldFaceHalfedges.push_back(leftFaceHalfedges[0]);
     leftOldFaceHalfedges.push_back(halfedge);
-    leftOldFaceHalfedges.push_back(new Halfedge);
+    leftOldFaceHalfedges.push_back(newHalfedge());
     linkFaceHalfedges(leftOldFaceHalfedges);
     updateFaceHalfedgesLeftFace(leftOldFaceHalfedges, leftOldFace);
     leftOldFaceHalfedges[2]->startVertex = breakPointVertex;
@@ -278,4 +264,129 @@ void HalfedgeMesh::breakEdge(HalfedgeMesh::Halfedge *halfedge)
         linkHalfedgePair(leftOldFaceHalfedges[1], rightNewFaceHalfedges[1]);
         linkHalfedgePair(leftNewFaceHalfedges[1], rightOldFaceHalfedges[1]);
     }
+}
+
+void HalfedgeMesh::changeVertexStartHalfedgeFrom(Vertex *vertex, Halfedge *halfedge)
+{
+    vertex->firstHalfedge = halfedge->previousHalfedge->oppositeHalfedge;
+    if (nullptr != vertex->firstHalfedge)
+        return;
+    
+    if (nullptr == halfedge->oppositeHalfedge)
+        return;
+    
+    vertex->firstHalfedge = halfedge->oppositeHalfedge->nextHalfedge;
+    return;
+}
+
+bool HalfedgeMesh::testLengthSquaredAroundVertex(Vertex *vertex, 
+    const Vector3 &target, 
+    double maxEdgeLengthSquared)
+{
+    const auto &startHalfedge = vertex->firstHalfedge;
+    Halfedge *loopHalfedge = startHalfedge;
+    if (nullptr != loopHalfedge->oppositeHalfedge) {
+        do {
+            if ((loopHalfedge->nextHalfedge->startVertex->position - 
+                    target).lengthSquared() > maxEdgeLengthSquared) {
+                return true;            
+            }
+            loopHalfedge = loopHalfedge->oppositeHalfedge;
+            if (nullptr == loopHalfedge)
+                break;
+            loopHalfedge = loopHalfedge->nextHalfedge;
+        } while (loopHalfedge != startHalfedge);
+    } else {
+        do {
+            if ((loopHalfedge->nextHalfedge->startVertex->position - 
+                    target).lengthSquared() > maxEdgeLengthSquared) {
+                return true;            
+            }
+            loopHalfedge = loopHalfedge->previousHalfedge;
+            if (nullptr == loopHalfedge)
+                break;
+            loopHalfedge = loopHalfedge->oppositeHalfedge;
+        } while (loopHalfedge != startHalfedge);
+    }
+    return false;
+}
+
+void HalfedgeMesh::pointerVertexToNewVertex(Vertex *vertex, Vertex *replacement)
+{
+    const auto &startHalfedge = vertex->firstHalfedge;
+    Halfedge *loopHalfedge = startHalfedge;
+    size_t count = 0;
+    if (nullptr != loopHalfedge->oppositeHalfedge) {
+        do {
+            //std::cout << "Update halfedge:" << loopHalfedge->debugIndex << " startVertex from " << loopHalfedge->startVertex->debugIndex << " to " << replacement->debugIndex << std::endl;
+            loopHalfedge->startVertex = replacement;
+            loopHalfedge = loopHalfedge->oppositeHalfedge;
+            if (nullptr == loopHalfedge)
+                break;
+            loopHalfedge = loopHalfedge->nextHalfedge;
+            if (count++ > 20) {
+                abort();
+            }
+        } while (loopHalfedge != startHalfedge);
+    } else {
+        do {
+            //std::cout << "Update halfedge:" << loopHalfedge->debugIndex << " startVertex from " << loopHalfedge->startVertex->debugIndex << " to " << replacement->debugIndex << std::endl;
+            loopHalfedge->startVertex = replacement;
+            loopHalfedge = loopHalfedge->previousHalfedge;
+            if (nullptr == loopHalfedge)
+                break;
+            loopHalfedge = loopHalfedge->oppositeHalfedge;
+        } while (loopHalfedge != startHalfedge);
+    }
+}
+
+bool HalfedgeMesh::collapseEdge(Halfedge *halfedge, double maxEdgeLengthSquared)
+{
+    //std::cout << "=====Try on vertex:" << halfedge->startVertex->debugIndex << " halfedge:" << halfedge->debugIndex << std::endl;
+    
+    Vector3 collapseTo = (halfedge->startVertex->position +
+        halfedge->nextHalfedge->startVertex->position) * 0.5;
+    
+    //std::cout << "first testLengthSquaredAroundVertex" << std::endl;
+    if (testLengthSquaredAroundVertex(halfedge->startVertex, collapseTo, maxEdgeLengthSquared))
+        return false;
+    //std::cout << "second testLengthSquaredAroundVertex" << std::endl;
+    if (testLengthSquaredAroundVertex(halfedge->nextHalfedge->startVertex, collapseTo, maxEdgeLengthSquared))
+        return false;
+
+    halfedge->nextHalfedge->startVertex->position = collapseTo;
+    
+    if (halfedge->previousHalfedge == halfedge->previousHalfedge->startVertex->firstHalfedge) {
+        //std::cout << "changeVertexStartHalfedgeFrom vertex:" << halfedge->previousHalfedge->startVertex->debugIndex << " from " << halfedge->previousHalfedge->debugIndex;
+        changeVertexStartHalfedgeFrom(halfedge->previousHalfedge->startVertex, 
+            halfedge->previousHalfedge);
+        //std::cout << " to " << halfedge->previousHalfedge->debugIndex << std::endl;
+    }
+    halfedge->leftFace->removed = true;
+    //std::cout << "pointerVertexToNewVertex from " << halfedge->startVertex->debugIndex << " to " << halfedge->nextHalfedge->startVertex->debugIndex << std::endl;
+    pointerVertexToNewVertex(halfedge->startVertex, 
+        halfedge->nextHalfedge->startVertex);
+    //std::cout << "linkHalfedgePair:" << halfedge->previousHalfedge->oppositeHalfedge->debugIndex << "," << halfedge->nextHalfedge->oppositeHalfedge->debugIndex << std::endl;
+    linkHalfedgePair(halfedge->previousHalfedge->oppositeHalfedge,
+        halfedge->nextHalfedge->oppositeHalfedge);
+    
+    Halfedge *opposite = halfedge->oppositeHalfedge;
+    if (nullptr != opposite) {
+        if (opposite->previousHalfedge == opposite->previousHalfedge->startVertex->firstHalfedge) {
+            //std::cout << "    changeVertexStartHalfedgeFrom vertex:" << opposite->previousHalfedge->startVertex->debugIndex << " from " << opposite->previousHalfedge->debugIndex;
+            changeVertexStartHalfedgeFrom(opposite->previousHalfedge->startVertex,
+                opposite->previousHalfedge);
+            //std::cout << "      to " << opposite->previousHalfedge->debugIndex << std::endl;
+        }
+        changeVertexStartHalfedgeFrom(opposite->startVertex,
+            opposite);
+        opposite->leftFace->removed = true;
+        //std::cout << "linkHalfedgePair:" << opposite->previousHalfedge->oppositeHalfedge->debugIndex << "," << opposite->nextHalfedge->oppositeHalfedge->debugIndex << std::endl;
+        linkHalfedgePair(opposite->previousHalfedge->oppositeHalfedge,
+            opposite->nextHalfedge->oppositeHalfedge);
+    }
+    
+    //std::cout << "Collapsed on vertex:" << halfedge->startVertex->debugIndex << std::endl;
+    
+    return true;
 }

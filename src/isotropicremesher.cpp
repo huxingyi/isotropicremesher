@@ -83,7 +83,32 @@ HalfedgeMesh *IsotropicRemesher::remeshedHalfedgeMesh()
 
 void IsotropicRemesher::collapseShortEdges(double minEdgeLengthSquared, double maxEdgeLengthSquared)
 {
-    // TODO:
+    for (HalfedgeMesh::Face *face = m_halfedgeMesh->moveToNextFace(nullptr); 
+            nullptr != face; 
+            ) {
+        if (face->removed) {
+            face = m_halfedgeMesh->moveToNextFace(face);
+            continue;
+        }
+        //std::cout << "Face:" << face->debugIndex << std::endl;
+        const auto &startHalfedge = face->halfedge;
+        face = m_halfedgeMesh->moveToNextFace(face);
+        HalfedgeMesh::Halfedge *halfedge = startHalfedge;
+        do {
+            //std::cout << "halfedge:" << halfedge->debugIndex << std::endl;
+            const auto &nextHalfedge = halfedge->nextHalfedge;
+            double lengthSquared = (halfedge->startVertex->position - nextHalfedge->startVertex->position).lengthSquared();
+            if (lengthSquared < minEdgeLengthSquared) {
+                //std::cout << "Collapse edge at lengthSquared:" << lengthSquared << " minEdgeLengthSquared:" << minEdgeLengthSquared << std::endl;
+                if (m_halfedgeMesh->collapseEdge(halfedge, maxEdgeLengthSquared)) {
+                    //std::cout << "Collapsed" << std::endl;
+                    break;
+                }
+                //std::cout << "Not collapse" << std::endl;
+            }
+            halfedge = nextHalfedge;
+        } while (halfedge != startHalfedge);
+    }
 }
 
 void IsotropicRemesher::flipEdges()
