@@ -3,6 +3,7 @@
 #include <chrono>
 #include "vector3.h"
 #include "isotropicremesher.h"
+#include "halfedgemesh.h"
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
 
@@ -75,10 +76,33 @@ int main(int argc, char **argv)
     std::vector<Vector3> inputVertices;
     std::vector<std::vector<size_t>> inputTriangles;
     
+    //loadObj("C:\\Users\\Jeremy\\Repositories\\solidboolean\\test\\cases\\simple-ring\\b.obj", inputVertices, inputTriangles);
     loadObj("C:\\Users\\Jeremy\\Repositories\\solidboolean\\test\\cases\\addax-and-meerkat\\a.obj", inputVertices, inputTriangles);
     
     IsotropicRemesher isotropicRemesher(&inputVertices, &inputTriangles);
     isotropicRemesher.remesh(1);
+    
+    FILE *fp = fopen("debug.obj", "wb");
+    size_t outputIndex = 0;
+    HalfedgeMesh *halfedgeMesh = isotropicRemesher.remeshedHalfedgeMesh();
+    for (HalfedgeMesh::Vertex *vertex = halfedgeMesh->moveToNextVertex(nullptr); 
+            nullptr != vertex;
+            vertex = halfedgeMesh->moveToNextVertex(vertex)) {
+        vertex->outputIndex = outputIndex++;
+        fprintf(fp, "v %f %f %f\n", 
+            vertex->position[0],
+            vertex->position[1],
+            vertex->position[2]);
+    }
+    for (HalfedgeMesh::Face *face = halfedgeMesh->moveToNextFace(nullptr); 
+            nullptr != face;
+            face = halfedgeMesh->moveToNextFace(face)) {
+        fprintf(fp, "f %d %d %d\n", 
+            (int)face->halfedge->previousHalfedge->startVertex->outputIndex + 1,
+            (int)face->halfedge->startVertex->outputIndex + 1,
+            (int)face->halfedge->nextHalfedge->startVertex->outputIndex + 1);
+    }
+    fclose(fp);
     
     return 0;
 }

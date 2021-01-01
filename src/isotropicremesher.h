@@ -37,6 +37,7 @@ public:
     }
     ~IsotropicRemesher();
     void remesh(size_t iteration);
+    HalfedgeMesh *remeshedHalfedgeMesh();
     
 private:
     const std::vector<Vector3> *m_vertices = nullptr;
@@ -44,7 +45,7 @@ private:
     HalfedgeMesh *m_halfedgeMesh = nullptr;
     
     void splitLongEdges(double maxEdgeLength);
-    void collapseShortEdges(double minEdgeLength, double maxEdgeLength);
+    void collapseShortEdges(double minEdgeLengthSquared, double maxEdgeLengthSquared);
     void flipEdges();
     void shiftVertices();
     void projectVertices();

@@ -41,21 +41,47 @@ void IsotropicRemesher::remesh(size_t iteration)
     double minTargetLength = 4.0 / 5.0 * targetLength;
     double maxTargetLength= 4.0 / 3.0 * targetLength;
     
+    double minTargetLengthSquared = minTargetLength * minTargetLength;
+    double maxTargetLengthSquared = maxTargetLength * maxTargetLength;
+    
     for (size_t i = 0; i < iteration; ++i) {
-        splitLongEdges(maxTargetLength);
-        collapseShortEdges(minTargetLength, maxTargetLength);
+        splitLongEdges(maxTargetLengthSquared);
+        collapseShortEdges(minTargetLengthSquared, maxTargetLengthSquared);
         flipEdges();
         shiftVertices();
         projectVertices();
     }
 }
 
-void IsotropicRemesher::splitLongEdges(double maxEdgeLength)
+void IsotropicRemesher::splitLongEdges(double maxEdgeLengthSquared)
 {
-    // TODO:
+    for (HalfedgeMesh::Face *face = m_halfedgeMesh->moveToNextFace(nullptr); 
+            nullptr != face; 
+            ) {
+        //std::cout << "Face:" << face->debugIndex << std::endl;
+        const auto &startHalfedge = face->halfedge;
+        face = m_halfedgeMesh->moveToNextFace(face);
+        HalfedgeMesh::Halfedge *halfedge = startHalfedge;
+        do {
+            //std::cout << "halfedge:" << (int)halfedge << std::endl;
+            const auto &nextHalfedge = halfedge->nextHalfedge;
+            double lengthSquared = (halfedge->startVertex->position - nextHalfedge->startVertex->position).lengthSquared();
+            if (lengthSquared > maxEdgeLengthSquared) {
+                //std::cout << "Break edge at lengthSquared:" << lengthSquared << " maxEdgeLengthSquared:" << maxEdgeLengthSquared << std::endl;
+                m_halfedgeMesh->breakEdge(halfedge);
+                break;
+            }
+            halfedge = nextHalfedge;
+        } while (halfedge != startHalfedge);
+    }
 }
 
-void IsotropicRemesher::collapseShortEdges(double minEdgeLength, double maxEdgeLength)
+HalfedgeMesh *IsotropicRemesher::remeshedHalfedgeMesh()
+{
+    return m_halfedgeMesh;
+}
+
+void IsotropicRemesher::collapseShortEdges(double minEdgeLengthSquared, double maxEdgeLengthSquared)
 {
     // TODO:
 }

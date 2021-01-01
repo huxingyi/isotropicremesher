@@ -34,6 +34,8 @@ public:
         Halfedge *firstHalfedge = nullptr;
         Vertex *previousVertex = nullptr;
         Vertex *nextVertex = nullptr;
+        bool removed = false;
+        size_t outputIndex;
     };
 
     struct Face
@@ -41,6 +43,8 @@ public:
         Halfedge *halfedge = nullptr;
         Face *previousFace = nullptr;
         Face *nextFace = nullptr;
+        bool removed = false;
+        size_t debugIndex = 0;
     };
 
     struct Halfedge
@@ -57,12 +61,15 @@ public:
     ~HalfedgeMesh();
     
     double averageEdgeLength();
-    
+    void breakEdge(Halfedge *halfedge);
+    Face *moveToNextFace(Face *face);
+    Vertex *moveToNextVertex(Vertex *vertex);
 private:
     Vertex *m_firstVertex = nullptr;
     Vertex *m_lastVertex = nullptr;
     Face *m_firstFace = nullptr;
     Face *m_lastFace = nullptr;
+    size_t m_debugFaceIndex = 0;
     
     static inline uint64_t makeHalfedgeKey(size_t first, size_t second)
     {
@@ -71,8 +78,30 @@ private:
     
     static inline uint64_t swapHalfedgeKey(uint64_t key)
     {
-        return makeHalfedgeKey(key >> 32, key & 0xffffffff);
+        return makeHalfedgeKey(key & 0xffffffff, key >> 32);
     }
+    
+    Face *firstFace()
+    {
+        return m_firstFace;
+    }
+    
+    Vertex *firstVertex()
+    {
+        return m_firstVertex;
+    }
+    
+    Face *newFace();
+    Vertex *newVertex();
+    void linkFaceHalfedges(std::vector<Halfedge *> &halfedges);
+    void updateFaceHalfedgesLeftFace(std::vector<Halfedge *> &halfedges,
+        Face *leftFace);
+    void linkHalfedgePair(Halfedge *first, Halfedge *second);
+    void breakFace(Face *leftOldFace,
+        Halfedge *halfedge,
+        Vertex *breakPointVertex,
+        std::vector<Halfedge *> &leftNewFaceHalfedges,
+        std::vector<Halfedge *> &leftOldFaceHalfedges);
 };
 
 #endif

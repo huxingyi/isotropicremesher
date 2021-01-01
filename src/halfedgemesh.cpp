@@ -54,6 +54,7 @@ HalfedgeMesh::HalfedgeMesh(const std::vector<Vector3> &vertices,
     halfedgeFaces.reserve(faces.size());
     for (const auto &it: faces) {
         Face *face = new Face;
+        face->debugIndex = ++m_debugFaceIndex;
         halfedgeFaces.push_back(face);
     }
     
@@ -72,9 +73,13 @@ HalfedgeMesh::HalfedgeMesh(const std::vector<Vector3> &vertices,
     std::unordered_map<uint64_t, Halfedge *> halfedgeMap;
     for (size_t faceIndex = 0; faceIndex < faces.size(); ++faceIndex) {
         const auto &indices = faces[faceIndex];
+        if (3 != indices.size()) {
+            std::cerr << "Found non-triangle, face count:" << indices.size() << std::endl;
+            continue;
+        }
         std::vector<Halfedge *> halfedges(indices.size());
-        for (size_t i = 0; i < indices.size(); ++i) {
-            size_t j = (i + 1) % indices.size();
+        for (size_t i = 0; i < 3; ++i) {
+            size_t j = (i + 1) % 3;
             const auto &first = indices[i];
             const auto &second = indices[j];
             
@@ -97,13 +102,7 @@ HalfedgeMesh::HalfedgeMesh(const std::vector<Vector3> &vertices,
                 std::cerr << "Found repeated halfedge:" << first << "," << second << std::endl;
             }
         }
-        for (size_t i = 0; i < indices.size(); ++i) {
-            size_t j = (i + 1) % indices.size();
-            const auto &first = indices[i];
-            const auto &second = indices[j];
-            halfedges[i]->nextHalfedge = halfedges[j];
-            halfedges[j]->previousHalfedge = halfedges[i];
-        }
+        linkFaceHalfedges(halfedges);
     }
     for (auto &it: halfedgeMap) {
         auto halfedgeIt = halfedgeMap.find(swapHalfedgeKey(it.first));
@@ -112,6 +111,28 @@ HalfedgeMesh::HalfedgeMesh(const std::vector<Vector3> &vertices,
         it.second->oppositeHalfedge = halfedgeIt->second;
         halfedgeIt->second->oppositeHalfedge = it.second;
     }
+}
+
+void HalfedgeMesh::linkFaceHalfedges(std::vector<HalfedgeMesh::Halfedge *> &halfedges)
+{
+    for (size_t i = 0; i < halfedges.size(); ++i) {
+        size_t j = (i + 1) % halfedges.size();
+        halfedges[i]->nextHalfedge = halfedges[j];
+        halfedges[j]->previousHalfedge = halfedges[i];
+    }
+}
+
+void HalfedgeMesh::updateFaceHalfedgesLeftFace(std::vector<HalfedgeMesh::Halfedge *> &halfedges,
+    HalfedgeMesh::Face *leftFace)
+{
+    for (auto &it: halfedges)
+        it->leftFace = leftFace;
+}
+
+void HalfedgeMesh::linkHalfedgePair(HalfedgeMesh::Halfedge *first, HalfedgeMesh::Halfedge *second)
+{
+    first->oppositeHalfedge = second;
+    second->oppositeHalfedge = first;
 }
 
 double HalfedgeMesh::averageEdgeLength()
@@ -132,3 +153,129 @@ double HalfedgeMesh::averageEdgeLength()
     return totalLength / halfedgeCount;
 }
 
+HalfedgeMesh::Face *HalfedgeMesh::newFace()
+{
+    Face *face = new Face;
+    face->debugIndex = ++m_debugFaceIndex;
+    if (nullptr != m_lastFace) {
+        m_lastFace->nextFace = face;
+        face->previousFace = m_lastFace;
+    } else {
+        m_firstFace = face;
+    }
+    m_lastFace = face;
+    return face;
+}
+
+HalfedgeMesh::Vertex *HalfedgeMesh::newVertex()
+{
+    Vertex *vertex = new Vertex;
+    if (nullptr != m_lastVertex) {
+        m_lastVertex->nextVertex = vertex;
+        vertex->previousVertex = m_lastVertex;
+    } else {
+        m_firstVertex = vertex;
+    }
+    m_lastVertex = vertex;
+    return vertex;
+}
+
+HalfedgeMesh::Face *HalfedgeMesh::moveToNextFace(HalfedgeMesh::Face *face)
+{
+    if (nullptr == face) {
+        face = m_firstFace;
+        if (nullptr == face)
+            return nullptr;
+        if (!face->removed)
+            return face;
+    }
+    do {
+        face = face->nextFace;
+    } while (nullptr != face && face->removed);
+    return face;
+}
+
+HalfedgeMesh::Vertex *HalfedgeMesh::moveToNextVertex(HalfedgeMesh::Vertex *vertex)
+{
+    if (nullptr == vertex) {
+        vertex = m_firstVertex;
+        if (nullptr == vertex)
+            return nullptr;
+        if (!vertex->removed)
+            return vertex;
+    }
+    do {
+        vertex = vertex->nextVertex;
+    } while (nullptr != vertex && vertex->removed);
+    return vertex;
+}
+
+void HalfedgeMesh::breakFace(HalfedgeMesh::Face *leftOldFace,
+    HalfedgeMesh::Halfedge *halfedge,
+    HalfedgeMesh::Vertex *breakPointVertex,
+    std::vector<HalfedgeMesh::Halfedge *> &leftNewFaceHalfedges,
+    std::vector<HalfedgeMesh::Halfedge *> &leftOldFaceHalfedges)
+{
+    std::vector<Halfedge *> leftFaceHalfedges = {
+        halfedge->previousHalfedge,
+        halfedge,
+        halfedge->nextHalfedge
+    };
+    
+    Face *leftNewFace = newFace();
+    leftNewFace->halfedge = leftFaceHalfedges[2];
+    leftFaceHalfedges[2]->leftFace = leftNewFace;
+    
+    leftNewFaceHalfedges.push_back(new Halfedge);
+    leftNewFaceHalfedges.push_back(new Halfedge);
+    leftNewFaceHalfedges.push_back(leftFaceHalfedges[2]);
+    linkFaceHalfedges(leftNewFaceHalfedges);
+    updateFaceHalfedgesLeftFace(leftNewFaceHalfedges, leftNewFace);
+    leftNewFaceHalfedges[0]->startVertex = leftFaceHalfedges[0]->startVertex;
+    leftNewFaceHalfedges[1]->startVertex = breakPointVertex;
+    
+    leftOldFaceHalfedges.push_back(leftFaceHalfedges[0]);
+    leftOldFaceHalfedges.push_back(halfedge);
+    leftOldFaceHalfedges.push_back(new Halfedge);
+    linkFaceHalfedges(leftOldFaceHalfedges);
+    updateFaceHalfedgesLeftFace(leftOldFaceHalfedges, leftOldFace);
+    leftOldFaceHalfedges[2]->startVertex = breakPointVertex;
+    
+    breakPointVertex->firstHalfedge = leftNewFaceHalfedges[1];
+    
+    linkHalfedgePair(leftNewFaceHalfedges[0], leftOldFaceHalfedges[2]);
+    
+    leftOldFace->halfedge = leftOldFaceHalfedges[0];
+}
+
+void HalfedgeMesh::breakEdge(HalfedgeMesh::Halfedge *halfedge)
+{
+    Face *leftOldFace = halfedge->leftFace;
+    Halfedge *oppositeHalfedge = halfedge->oppositeHalfedge;
+    Face *rightOldFace = nullptr;
+    
+    if (nullptr != oppositeHalfedge)
+        rightOldFace = oppositeHalfedge->leftFace;
+    
+    Vertex *breakPointVertex = newVertex();
+    breakPointVertex->position = (halfedge->startVertex->position +
+        halfedge->nextHalfedge->startVertex->position) * 0.5;
+        
+    //std::cout << "Break first half:" << leftOldFace->debugIndex << " halfedge:" << (int)halfedge << std::endl;
+    
+    std::vector<Halfedge *> leftNewFaceHalfedges;
+    std::vector<Halfedge *> leftOldFaceHalfedges;
+    breakFace(leftOldFace, halfedge, breakPointVertex,
+        leftNewFaceHalfedges, leftOldFaceHalfedges);
+    
+    if (nullptr != rightOldFace) {
+        //std::cout << "Break second half:" << rightOldFace->debugIndex << " halfedge:" << (int)oppositeHalfedge << std::endl;
+        
+        std::vector<Halfedge *> rightNewFaceHalfedges;
+        std::vector<Halfedge *> rightOldFaceHalfedges;
+        breakFace(rightOldFace, oppositeHalfedge, breakPointVertex,
+            rightNewFaceHalfedges, rightOldFaceHalfedges);
+        linkHalfedgePair(leftOldFaceHalfedges[1], rightNewFaceHalfedges[1]);
+        linkHalfedgePair(leftNewFaceHalfedges[1], rightOldFaceHalfedges[1]);
+    }
+}
