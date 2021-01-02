@@ -23,6 +23,8 @@
 #define ISOTROPICREMESHER_H
 #include <vector>
 #include "vector3.h"
+#include "axisalignedboundingboxtree.h"
+#include "axisalignedboundingbox.h"
 
 class HalfedgeMesh;
 
@@ -42,13 +44,23 @@ public:
 private:
     const std::vector<Vector3> *m_vertices = nullptr;
     const std::vector<std::vector<size_t>> *m_triangles = nullptr;
+    std::vector<Vector3> *m_triangleNormals = nullptr;
     HalfedgeMesh *m_halfedgeMesh = nullptr;
+    std::vector<AxisAlignedBoudingBox> *m_triangleBoxes = nullptr;
+    AxisAlignedBoudingBoxTree *m_axisAlignedBoundingBoxTree = nullptr;
+    
+    void addTriagleToAxisAlignedBoundingBox(const std::vector<size_t> &triangle, AxisAlignedBoudingBox *box)
+    {
+        for (size_t i = 0; i < 3; ++i)
+            box->update((*m_vertices)[triangle[i]]);
+    }
     
     void splitLongEdges(double maxEdgeLength);
     void collapseShortEdges(double minEdgeLengthSquared, double maxEdgeLengthSquared);
     void flipEdges();
     void shiftVertices();
     void projectVertices();
+    void buildAxisAlignedBoundingBoxTree();
 };
 
 #endif

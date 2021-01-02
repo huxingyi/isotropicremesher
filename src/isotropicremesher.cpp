@@ -27,14 +27,52 @@
 IsotropicRemesher::~IsotropicRemesher()
 {
     delete m_halfedgeMesh;
+    delete m_axisAlignedBoundingBoxTree;
+    delete m_triangleBoxes;
+    delete m_triangleNormals;
+}
+
+void IsotropicRemesher::buildAxisAlignedBoundingBoxTree()
+{
+    m_triangleBoxes = new std::vector<AxisAlignedBoudingBox>(m_triangles->size());
+    
+    for (size_t i = 0; i < (*m_triangleBoxes).size(); ++i) {
+        addTriagleToAxisAlignedBoundingBox((*m_triangles)[i], &(*m_triangleBoxes)[i]);
+        (*m_triangleBoxes)[i].updateCenter();
+    }
+    
+    std::vector<size_t> faceIndices;
+    for (size_t i = 0; i < (*m_triangleBoxes).size(); ++i)
+        faceIndices.push_back(i);
+    
+    AxisAlignedBoudingBox groupBox;
+    for (const auto &i: faceIndices) {
+        addTriagleToAxisAlignedBoundingBox((*m_triangles)[i], &groupBox);
+    }
+    groupBox.updateCenter();
+    
+    delete m_axisAlignedBoundingBoxTree;
+    m_axisAlignedBoundingBoxTree = new AxisAlignedBoudingBoxTree(m_triangleBoxes, 
+        faceIndices, groupBox);
 }
 
 void IsotropicRemesher::remesh(size_t iteration)
 {
+    delete m_triangleNormals;
+    m_triangleNormals = new std::vector<Vector3>;
+    m_triangleNormals->reserve(m_triangles->size());
+    for (const auto &it: *m_triangles) {
+        m_triangleNormals->push_back(
+            Vector3::normal((*m_vertices)[it[0]], 
+                (*m_vertices)[it[1]], 
+                (*m_vertices)[it[2]])
+        );
+    }
+    
     delete m_halfedgeMesh;
     m_halfedgeMesh = new HalfedgeMesh(*m_vertices, *m_triangles);
     
-    auto targetLength = m_halfedgeMesh->averageEdgeLength() * 0.5;
+    auto targetLength = m_halfedgeMesh->averageEdgeLength() * 0.2;
     
     std::cout << "targetLength:" << targetLength << std::endl;
     
@@ -43,6 +81,8 @@ void IsotropicRemesher::remesh(size_t iteration)
     
     double minTargetLengthSquared = minTargetLength * minTargetLength;
     double maxTargetLengthSquared = maxTargetLength * maxTargetLength;
+    
+    buildAxisAlignedBoundingBoxTree();
     
     for (size_t i = 0; i < iteration; ++i) {
         splitLongEdges(maxTargetLengthSquared);
@@ -148,6 +188,82 @@ void IsotropicRemesher::shiftVertices()
 
 void IsotropicRemesher::projectVertices()
 {
-    // TODO:
+    for (HalfedgeMesh::Vertex *vertex = m_halfedgeMesh->moveToNextVertex(nullptr); 
+            nullptr != vertex;
+            vertex = m_halfedgeMesh->moveToNextVertex(vertex)) {
+        const auto &startHalfedge = vertex->firstHalfedge;
+        if (nullptr == startHalfedge)
+            continue;
+        
+        //std::cout << "Project vertex:" << vertex->debugIndex << std::endl;
+        
+        std::vector<AxisAlignedBoudingBox> rayBox(1);
+        auto &box = rayBox[0];
+        box.update(vertex->position);
+
+        HalfedgeMesh::Halfedge *loopHalfedge = startHalfedge;
+        do {
+            //std::cout << "Add point:" << loopHalfedge->nextHalfedge->startVertex->debugIndex << std::endl;
+            box.update(loopHalfedge->nextHalfedge->startVertex->position);
+            if (nullptr == loopHalfedge->oppositeHalfedge) {
+                loopHalfedge = startHalfedge;
+                do {
+                    //std::cout << "Add point:" << loopHalfedge->previousHalfedge->startVertex->debugIndex << std::endl;
+                    box.update(loopHalfedge->previousHalfedge->startVertex->position);
+                    loopHalfedge = loopHalfedge->previousHalfedge->oppositeHalfedge;
+                    if (nullptr == loopHalfedge)
+                        break;
+                } while (loopHalfedge != startHalfedge);
+                break;
+            }
+            loopHalfedge = loopHalfedge->oppositeHalfedge->nextHalfedge;
+        } while (loopHalfedge != startHalfedge);
+        
+        //std::cout << "Do test..." << std::endl;
+        
+        AxisAlignedBoudingBoxTree testTree(&rayBox,
+            {0},
+            rayBox[0]);
+        std::vector<std::pair<size_t, size_t>> pairs;
+        m_axisAlignedBoundingBoxTree->test(m_axisAlignedBoundingBoxTree->root(), testTree.root(), &rayBox, &pairs);
+        
+        std::vector<std::pair<Vector3, double>> hits;
+        
+        auto boundingBoxSize = box.upperBound() - box.lowerBound();
+        Vector3 segment = vertex->_normal * (boundingBoxSize[0] + boundingBoxSize[1] + boundingBoxSize[2]);
+        for (const auto &it: pairs) {
+            const auto &triangle = (*m_triangles)[it.first];
+            std::vector<Vector3> trianglePositions = {
+                (*m_vertices)[triangle[0]],
+                (*m_vertices)[triangle[1]],
+                (*m_vertices)[triangle[2]]
+            };
+            Vector3 intersection;
+            if (Vector3::intersectSegmentAndPlane(vertex->position - segment, vertex->position + segment,
+                    trianglePositions[0], 
+                    (*m_triangleNormals)[it.first],
+                    &intersection)) {
+                std::vector<Vector3> normals;
+                for (size_t i = 0; i < 3; ++i) {
+                    size_t j = (i + 1) % 3;
+                    normals.push_back(Vector3::normal(intersection, trianglePositions[i], trianglePositions[j]));
+                }
+                if (Vector3::dotProduct(normals[0], normals[1]) > 0 && 
+                        Vector3::dotProduct(normals[0], normals[2]) > 0) {
+                    hits.push_back({intersection, (vertex->position - intersection).lengthSquared()});
+                    //std::cout << "Vertex[" << vertex->debugIndex << "]: potential intersect " << it.first << std::endl;
+                }
+            }
+        }
+        
+        if (!hits.empty()) {
+            vertex->position = std::min_element(hits.begin(), hits.end(), [](const std::pair<Vector3, double> &first,
+                    const std::pair<Vector3, double> &second) {
+                return first.second < second.second;
+            })->first;
+        }
+        
+        //std::cout << "Done test" << std::endl;
+    }
 }
 

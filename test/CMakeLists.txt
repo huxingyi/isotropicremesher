@@ -18,6 +18,11 @@ add_executable(test-isotropicremesher
     
     ../src/double.h
     
+    ../src/axisalignedboundingbox.h
+    
+    ../src/axisalignedboundingboxtree.cpp
+    ../src/axisalignedboundingboxtree.h
+    
     ../src/halfedgemesh.cpp
     ../src/halfedgemesh.h
     

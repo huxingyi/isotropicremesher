@@ -77,13 +77,13 @@ int main(int argc, char **argv)
     std::vector<std::vector<size_t>> inputTriangles;
     
     //loadObj("C:\\Users\\Jeremy\\Repositories\\solidboolean\\test\\cases\\simple-ring\\a.obj", inputVertices, inputTriangles);
-    //loadObj("C:\\Users\\Jeremy\\Repositories\\solidboolean\\test\\cases\\screwdriver\\b.obj", inputVertices, inputTriangles);
-    loadObj("C:\\Users\\Jeremy\\Repositories\\solidboolean\\test\\cases\\addax-and-meerkat\\a.obj", inputVertices, inputTriangles);
+    loadObj("C:\\Users\\Jeremy\\Repositories\\solidboolean\\test\\cases\\screwdriver\\a.obj", inputVertices, inputTriangles);
+    //loadObj("C:\\Users\\Jeremy\\Repositories\\solidboolean\\test\\cases\\addax-and-meerkat\\a.obj", inputVertices, inputTriangles);
     //loadObj("C:\\Users\\Jeremy\\Repositories\\test-models\\bunny.obj", inputVertices, inputTriangles);
     //loadObj("C:\\Users\\Jeremy\\Downloads\\FeatureSeg_demo\\example\\face.obj", inputVertices, inputTriangles);
     
     IsotropicRemesher isotropicRemesher(&inputVertices, &inputTriangles);
-    isotropicRemesher.remesh(1);
+    isotropicRemesher.remesh(3);
     
     FILE *fp = fopen("debug.obj", "wb");
     size_t outputIndex = 0;
