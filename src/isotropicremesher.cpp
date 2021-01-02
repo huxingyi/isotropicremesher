@@ -34,7 +34,7 @@ void IsotropicRemesher::remesh(size_t iteration)
     delete m_halfedgeMesh;
     m_halfedgeMesh = new HalfedgeMesh(*m_vertices, *m_triangles);
     
-    auto targetLength = m_halfedgeMesh->averageEdgeLength();
+    auto targetLength = m_halfedgeMesh->averageEdgeLength() * 0.05;
     
     std::cout << "targetLength:" << targetLength << std::endl;
     
@@ -113,7 +113,29 @@ void IsotropicRemesher::collapseShortEdges(double minEdgeLengthSquared, double m
 
 void IsotropicRemesher::flipEdges()
 {
-    // TODO:
+    for (HalfedgeMesh::Face *face = m_halfedgeMesh->moveToNextFace(nullptr); 
+            nullptr != face; 
+            ) {
+        if (face->removed) {
+            face = m_halfedgeMesh->moveToNextFace(face);
+            continue;
+        }
+        //std::cout << "Face:" << face->debugIndex << std::endl;
+        const auto &startHalfedge = face->halfedge;
+        face = m_halfedgeMesh->moveToNextFace(face);
+        HalfedgeMesh::Halfedge *halfedge = startHalfedge;
+        do {
+            //std::cout << "halfedge:" << halfedge->debugIndex << std::endl;
+            const auto &nextHalfedge = halfedge->nextHalfedge;
+            if (nullptr != halfedge->oppositeHalfedge) {
+                if (m_halfedgeMesh->flipEdge(halfedge)) {
+                    break;
+                }
+                //std::cout << "valence:" << m_halfedgeMesh->vertexValence(halfedge->startVertex) << std::endl;
+            }
+            halfedge = nextHalfedge;
+        } while (halfedge != startHalfedge);
+    }
 }
 
 void IsotropicRemesher::shiftVertices()

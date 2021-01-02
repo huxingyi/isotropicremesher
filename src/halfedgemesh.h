@@ -66,15 +66,10 @@ public:
     double averageEdgeLength();
     void breakEdge(Halfedge *halfedge);
     bool collapseEdge(Halfedge *halfedge, double maxEdgeLengthSquared);
-    bool testLengthSquaredAroundVertex(Vertex *vertex, 
-        const Vector3 &target, 
-        double maxEdgeLengthSquared);
-    void collectVerticesAroundVertex(Vertex *vertex,
-        std::set<Vertex *> &vertices);
+    bool flipEdge(Halfedge *halfedge);
+    size_t vertexValence(Vertex *vertex, bool *isBoundary=nullptr);
     Face *moveToNextFace(Face *face);
     Vertex *moveToNextVertex(Vertex *vertex);
-    void changeVertexStartHalfedgeFrom(Vertex *vertex, Halfedge *halfedge);
-    void pointerVertexToNewVertex(Vertex *vertex, Vertex *replacement);
 private:
     Vertex *m_firstVertex = nullptr;
     Vertex *m_lastVertex = nullptr;
@@ -116,6 +111,13 @@ private:
         Vertex *breakPointVertex,
         std::vector<Halfedge *> &leftNewFaceHalfedges,
         std::vector<Halfedge *> &leftOldFaceHalfedges);
+    void changeVertexStartHalfedgeFrom(Vertex *vertex, Halfedge *halfedge);
+    void pointerVertexToNewVertex(Vertex *vertex, Vertex *replacement);
+    bool testLengthSquaredAroundVertex(Vertex *vertex, 
+        const Vector3 &target, 
+        double maxEdgeLengthSquared);
+    void collectVerticesAroundVertex(Vertex *vertex,
+        std::set<Vertex *> *vertices);
 };
 
 #endif
