@@ -76,11 +76,6 @@ int main(int argc, char **argv)
     std::vector<Vector3> inputVertices;
     std::vector<std::vector<size_t>> inputTriangles;
     
-    //loadObj("C:\\Users\\Jeremy\\Repositories\\solidboolean\\test\\cases\\simple-ring\\a.obj", inputVertices, inputTriangles);
-    //loadObj("C:\\Users\\Jeremy\\Repositories\\solidboolean\\test\\cases\\screwdriver\\a.obj", inputVertices, inputTriangles);
-    //loadObj("C:\\Users\\Jeremy\\Repositories\\solidboolean\\test\\cases\\addax-and-meerkat\\a.obj", inputVertices, inputTriangles);
-    //loadObj("C:\\Users\\Jeremy\\Repositories\\test-models\\gargoyle-translated.obj", inputVertices, inputTriangles);
-    //loadObj("C:\\Users\\Jeremy\\Downloads\\FeatureSeg_demo\\example\\face.obj", inputVertices, inputTriangles);
     loadObj("../../gargoyle.obj", inputVertices, inputTriangles);
     
     IsotropicRemesher isotropicRemesher(&inputVertices, &inputTriangles);
