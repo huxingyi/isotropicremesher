@@ -35,6 +35,9 @@ public:
         Halfedge *firstHalfedge = nullptr;
         Vertex *previousVertex = nullptr;
         Vertex *nextVertex = nullptr;
+        int _valence = -1;
+        bool _isBoundary = false;
+        Vector3 _normal;
         bool removed = false;
         size_t debugIndex = 0;
         size_t outputIndex = 0;
@@ -67,9 +70,12 @@ public:
     void breakEdge(Halfedge *halfedge);
     bool collapseEdge(Halfedge *halfedge, double maxEdgeLengthSquared);
     bool flipEdge(Halfedge *halfedge);
+    void relaxVertex(Vertex *vertex);
     size_t vertexValence(Vertex *vertex, bool *isBoundary=nullptr);
     Face *moveToNextFace(Face *face);
     Vertex *moveToNextVertex(Vertex *vertex);
+    void updateVertexValences();
+    void updateVertexNormals();
 private:
     Vertex *m_firstVertex = nullptr;
     Vertex *m_lastVertex = nullptr;

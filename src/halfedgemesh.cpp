@@ -389,6 +389,28 @@ void HalfedgeMesh::pointerVertexToNewVertex(Vertex *vertex, Vertex *replacement)
     } while (loopHalfedge != startHalfedge);
 }
 
+void HalfedgeMesh::relaxVertex(Vertex *vertex)
+{
+    if (vertex->_isBoundary || vertex->_valence <= 0)
+        return;
+    
+    const auto &startHalfedge = vertex->firstHalfedge;
+    if (nullptr == startHalfedge)
+        return;
+    
+    Vector3 position;
+    
+    Halfedge *loopHalfedge = startHalfedge;
+    do {
+        position += loopHalfedge->oppositeHalfedge->startVertex->position;
+        loopHalfedge = loopHalfedge->oppositeHalfedge->nextHalfedge;
+    } while (loopHalfedge != startHalfedge);
+    
+    position /= vertex->_valence;
+
+    vertex->position = Vector3::projectPointOnLine(vertex->position, position, position + vertex->_normal);
+}
+
 bool HalfedgeMesh::flipEdge(Halfedge *halfedge)
 {
     Vertex *topVertex = halfedge->previousHalfedge->startVertex;
@@ -514,6 +536,7 @@ bool HalfedgeMesh::collapseEdge(Halfedge *halfedge, double maxEdgeLengthSquared)
         //std::cout << " to " << halfedge->previousHalfedge->debugIndex << std::endl;
     }
     halfedge->leftFace->removed = true;
+    halfedge->startVertex->removed = true;
     //std::cout << "pointerVertexToNewVertex from " << halfedge->startVertex->debugIndex << " to " << halfedge->nextHalfedge->startVertex->debugIndex << std::endl;
     pointerVertexToNewVertex(halfedge->startVertex, 
         halfedge->nextHalfedge->startVertex);
@@ -538,6 +561,48 @@ bool HalfedgeMesh::collapseEdge(Halfedge *halfedge, double maxEdgeLengthSquared)
     }
     
     //std::cout << "Collapsed on vertex:" << halfedge->startVertex->debugIndex << std::endl;
-    
+
     return true;
 }
+
+void HalfedgeMesh::updateVertexValences()
+{
+    for (Vertex *vertex = m_firstVertex; nullptr != vertex; vertex = vertex->nextVertex) {
+        if (vertex->removed)
+            continue;
+        vertex->_isBoundary = false;
+        vertex->_valence = vertexValence(vertex, &vertex->_isBoundary);
+    }
+}
+
+void HalfedgeMesh::updateVertexNormals()
+{
+    for (Vertex *vertex = m_firstVertex; nullptr != vertex; vertex = vertex->nextVertex) {
+        if (vertex->removed)
+            continue;
+        vertex->_normal = Vector3();
+    }
+    
+    for (Face *face = m_firstFace; nullptr != face; face = face->nextFace) {
+        if (face->removed)
+            continue;
+        auto &startHalfedge = face->halfedge;
+        Vector3 faceNormal = Vector3::normal(startHalfedge->previousHalfedge->startVertex->position,
+                startHalfedge->startVertex->position,
+                startHalfedge->nextHalfedge->startVertex->position) *
+            Vector3::area(startHalfedge->previousHalfedge->startVertex->position,
+                startHalfedge->startVertex->position,
+                startHalfedge->nextHalfedge->startVertex->position);
+        startHalfedge->previousHalfedge->startVertex->_normal += faceNormal;
+        startHalfedge->startVertex->_normal += faceNormal;
+        startHalfedge->nextHalfedge->startVertex->_normal += faceNormal;
+    }
+    
+    for (Vertex *vertex = m_firstVertex; nullptr != vertex; vertex = vertex->nextVertex) {
+        if (vertex->removed)
+            continue;
+        vertex->_normal.normalize();
+    }
+}
+
+

@@ -306,6 +306,13 @@ public:
         return true;
     }
     
+    inline static Vector3 projectPointOnLine(const Vector3 &point, const Vector3 &linePointA, const Vector3 &linePointB)
+    {
+        auto aToPoint = point - linePointA;
+        auto aToB = linePointB - linePointA;
+        return linePointA + Vector3::dotProduct(aToPoint, aToB) / Vector3::dotProduct(aToB, aToB) * aToB;
+    }
+    
 private:
     double m_data[3] = {0.0};
 };

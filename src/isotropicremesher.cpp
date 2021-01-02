@@ -34,7 +34,7 @@ void IsotropicRemesher::remesh(size_t iteration)
     delete m_halfedgeMesh;
     m_halfedgeMesh = new HalfedgeMesh(*m_vertices, *m_triangles);
     
-    auto targetLength = m_halfedgeMesh->averageEdgeLength() * 0.05;
+    auto targetLength = m_halfedgeMesh->averageEdgeLength() * 0.5;
     
     std::cout << "targetLength:" << targetLength << std::endl;
     
@@ -116,10 +116,6 @@ void IsotropicRemesher::flipEdges()
     for (HalfedgeMesh::Face *face = m_halfedgeMesh->moveToNextFace(nullptr); 
             nullptr != face; 
             ) {
-        if (face->removed) {
-            face = m_halfedgeMesh->moveToNextFace(face);
-            continue;
-        }
         //std::cout << "Face:" << face->debugIndex << std::endl;
         const auto &startHalfedge = face->halfedge;
         face = m_halfedgeMesh->moveToNextFace(face);
@@ -140,7 +136,14 @@ void IsotropicRemesher::flipEdges()
 
 void IsotropicRemesher::shiftVertices()
 {
-    // TODO:
+    m_halfedgeMesh->updateVertexValences();
+    m_halfedgeMesh->updateVertexNormals();
+    
+    for (HalfedgeMesh::Vertex *vertex = m_halfedgeMesh->moveToNextVertex(nullptr); 
+            nullptr != vertex;
+            vertex = m_halfedgeMesh->moveToNextVertex(vertex)) {
+        m_halfedgeMesh->relaxVertex(vertex);
+    }
 }
 
 void IsotropicRemesher::projectVertices()
