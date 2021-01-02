@@ -1,6 +1,8 @@
 # Isotropic Remesher
 Isotropic Remeshing of Triangulated Surface
 
+<img src="https://raw.githubusercontent.com/huxingyi/isotropicremesher/main/test/isotropic-remesher.png?token=AA6CJXNY76GRFELQ2VPBAES76CCSE" width="755"/>
+
 # Overview
 This repository implement the five steps of Isotropic Remeshing described in this document,
 http://graphics.stanford.edu/courses/cs468-12-spring/LectureSlides/13_Remeshing1.pdf
