@@ -25,7 +25,23 @@
 
 HalfedgeMesh::~HalfedgeMesh()
 {
-    // TODO:
+    while (nullptr != m_vertexAllocLink) {
+        Vertex *vertex = m_vertexAllocLink;
+        m_vertexAllocLink = vertex->_allocLink;
+        delete vertex;
+    }
+    
+    while (nullptr != m_faceAllocLink) {
+        Face *face = m_faceAllocLink;
+        m_faceAllocLink = face->_allocLink;
+        delete face;
+    }
+    
+    while (nullptr != m_halfedgeAllocLink) {
+        Halfedge *halfedge = m_halfedgeAllocLink;
+        m_halfedgeAllocLink = halfedge->_allocLink;
+        delete halfedge;
+    }
 }
 
 HalfedgeMesh::HalfedgeMesh(const std::vector<Vector3> &vertices,
@@ -135,6 +151,10 @@ double HalfedgeMesh::averageEdgeLength()
 HalfedgeMesh::Face *HalfedgeMesh::newFace()
 {
     Face *face = new Face;
+    
+    face->_allocLink = m_faceAllocLink;
+    m_faceAllocLink = face;
+    
     face->debugIndex = ++m_debugFaceIndex;
     if (nullptr != m_lastFace) {
         m_lastFace->nextFace = face;
@@ -149,6 +169,10 @@ HalfedgeMesh::Face *HalfedgeMesh::newFace()
 HalfedgeMesh::Vertex *HalfedgeMesh::newVertex()
 {
     Vertex *vertex = new Vertex;
+    
+    vertex->_allocLink = m_vertexAllocLink;
+    m_vertexAllocLink = vertex;
+    
     vertex->debugIndex = ++m_debugVertexIndex;
     if (nullptr != m_lastVertex) {
         m_lastVertex->nextVertex = vertex;
@@ -163,6 +187,10 @@ HalfedgeMesh::Vertex *HalfedgeMesh::newVertex()
 HalfedgeMesh::Halfedge *HalfedgeMesh::newHalfedge()
 {
     Halfedge *halfedge = new Halfedge;
+    
+    halfedge->_allocLink = m_halfedgeAllocLink;
+    m_halfedgeAllocLink = halfedge;
+    
     halfedge->debugIndex = ++m_debugHalfedgeIndex;
     return halfedge;
 }
@@ -447,11 +475,11 @@ bool HalfedgeMesh::flipEdge(Halfedge *halfedge)
     if (newDeviation <= oldDeviation)
         return false;
     
-    std::cout << "newDeviation:" << newDeviation << " oldDeviation:" << oldDeviation << std::endl;
+    //std::cout << "newDeviation:" << newDeviation << " oldDeviation:" << oldDeviation << std::endl;
     
     if ((Vector3::dotProduct(Vector3::normal(topVertex->position, leftVertex->position, bottomVertex->position),
                     Vector3::normal(bottomVertex->position, rightVertex->position, topVertex->position)) <= 0.0)) {
-        std::cout << "Non convex polygon" << std::endl;
+        //std::cout << "Non convex polygon" << std::endl;
         return false;
     }
     

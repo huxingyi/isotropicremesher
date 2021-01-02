@@ -72,7 +72,7 @@ void IsotropicRemesher::remesh(size_t iteration)
     delete m_halfedgeMesh;
     m_halfedgeMesh = new HalfedgeMesh(*m_vertices, *m_triangles);
     
-    auto targetLength = m_halfedgeMesh->averageEdgeLength() * 0.2;
+    auto targetLength = m_halfedgeMesh->averageEdgeLength();
     
     std::cout << "targetLength:" << targetLength << std::endl;
     
@@ -85,12 +85,16 @@ void IsotropicRemesher::remesh(size_t iteration)
     buildAxisAlignedBoundingBoxTree();
     
     for (size_t i = 0; i < iteration; ++i) {
+        std::cout << "iteration:" << i << std::endl;
+        
         splitLongEdges(maxTargetLengthSquared);
         collapseShortEdges(minTargetLengthSquared, maxTargetLengthSquared);
         flipEdges();
         shiftVertices();
         projectVertices();
     }
+    
+    std::cout << "Done" << std::endl;
 }
 
 void IsotropicRemesher::splitLongEdges(double maxEdgeLengthSquared)

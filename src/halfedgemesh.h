@@ -41,6 +41,7 @@ public:
         bool removed = false;
         size_t debugIndex = 0;
         size_t outputIndex = 0;
+        Vertex *_allocLink = nullptr;
     };
 
     struct Face
@@ -50,6 +51,7 @@ public:
         Face *nextFace = nullptr;
         bool removed = false;
         size_t debugIndex = 0;
+        Face *_allocLink = nullptr;
     };
 
     struct Halfedge
@@ -60,6 +62,7 @@ public:
         Halfedge *previousHalfedge = nullptr;
         Halfedge *oppositeHalfedge = nullptr;
         size_t debugIndex = 0;
+        Halfedge *_allocLink = nullptr;
     };
     
     HalfedgeMesh(const std::vector<Vector3> &vertices,
@@ -84,6 +87,9 @@ private:
     size_t m_debugVertexIndex = 0;
     size_t m_debugFaceIndex = 0;
     size_t m_debugHalfedgeIndex = 0;
+    Vertex *m_vertexAllocLink = nullptr;
+    Face *m_faceAllocLink = nullptr;
+    Halfedge *m_halfedgeAllocLink = nullptr;
     
     static inline uint64_t makeHalfedgeKey(size_t first, size_t second)
     {
