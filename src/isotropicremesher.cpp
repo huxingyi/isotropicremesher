@@ -42,6 +42,11 @@ void IsotropicRemesher::setTargetEdgeLength(double edgeLength)
     m_targetEdgeLength = edgeLength;
 }
 
+void IsotropicRemesher::setTargetTriangleCount(size_t triangleCount)
+{
+    m_targetTriangleCount = triangleCount;
+}
+
 void IsotropicRemesher::buildAxisAlignedBoundingBoxTree()
 {
     m_triangleBoxes = new std::vector<AxisAlignedBoudingBox>(m_triangles->size());
@@ -93,7 +98,16 @@ void IsotropicRemesher::remesh(size_t iteration)
         );
     }
 
-    auto targetLength = m_targetEdgeLength > 0 ? m_targetEdgeLength : m_initialAverageEdgeLength;
+    double targetLength = m_targetEdgeLength > 0 ? m_targetEdgeLength : m_initialAverageEdgeLength;
+    
+    if (m_targetTriangleCount > 0) {
+        double totalArea = 0.0;
+        for (const auto &it: *m_triangles) {
+            totalArea += Vector3::area((*m_vertices)[it[0]], (*m_vertices)[it[1]], (*m_vertices)[it[2]]);
+        }
+        double triangleArea = totalArea / m_targetTriangleCount;
+        targetLength = std::sqrt(triangleArea / (0.86602540378 * 0.5));
+    }
     
     //std::cout << "targetLength:" << targetLength << std::endl;
     

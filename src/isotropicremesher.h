@@ -37,6 +37,7 @@ public:
     double initialAverageEdgeLength();
     void setSharpEdgeIncludedAngle(double degrees);
     void setTargetEdgeLength(double edgeLength);
+    void setTargetTriangleCount(size_t triangleCount);
     void remesh(size_t iteration);
     HalfedgeMesh *remeshedHalfedgeMesh();
     
@@ -50,6 +51,7 @@ private:
     double m_sharpEdgeThresholdRadians = 0;
     double m_targetEdgeLength = 0;
     double m_initialAverageEdgeLength = 0;
+    size_t m_targetTriangleCount = 0;
     
     void addTriagleToAxisAlignedBoundingBox(const std::vector<size_t> &triangle, AxisAlignedBoudingBox *box)
     {
