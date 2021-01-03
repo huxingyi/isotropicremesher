@@ -105,13 +105,15 @@ void IsotropicRemesher::remesh(size_t iteration)
     
     buildAxisAlignedBoundingBoxTree();
     
-    bool skipSplitOnce = false;
+    bool skipSplitOnce = true;
     if (m_sharpEdgeThresholdRadians > 0) {
-        skipSplitOnce = true;
         //std::cout << "Presplit long edges" << std::endl;
         splitLongEdges(maxTargetLengthSquared);
         m_halfedgeMesh->updateTriangleNormals();
         m_halfedgeMesh->featureEdges(m_sharpEdgeThresholdRadians);
+    } else {
+        splitLongEdges(maxTargetLengthSquared);
+        m_halfedgeMesh->featureBoundaries();
     }
     
     for (size_t i = 0; i < iteration; ++i) {
@@ -149,11 +151,8 @@ void IsotropicRemesher::splitLongEdges(double maxEdgeLengthSquared)
             const auto &nextHalfedge = halfedge->nextHalfedge;
             double lengthSquared = (halfedge->startVertex->position - nextHalfedge->startVertex->position).lengthSquared();
             if (lengthSquared > maxEdgeLengthSquared) {
-                //if (1 != halfedge->featureState) {
-                    //std::cout << "Break edge at lengthSquared:" << lengthSquared << " maxEdgeLengthSquared:" << maxEdgeLengthSquared << std::endl;
-                    m_halfedgeMesh->breakEdge(halfedge);
-                    break;
-                //}
+                m_halfedgeMesh->breakEdge(halfedge);
+                break;
             }
             halfedge = nextHalfedge;
         } while (halfedge != startHalfedge);
@@ -320,4 +319,3 @@ void IsotropicRemesher::projectVertices()
         //std::cout << "Done test" << std::endl;
     }
 }
-

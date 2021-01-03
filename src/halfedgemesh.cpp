@@ -99,11 +99,8 @@ HalfedgeMesh::HalfedgeMesh(const std::vector<Vector3> &vertices,
     }
     for (auto &it: halfedgeMap) {
         auto halfedgeIt = halfedgeMap.find(swapHalfedgeKey(it.first));
-        if (halfedgeIt == halfedgeMap.end()) {
-            it.second->startVertex->featured = true;
-            it.second->previousHalfedge->startVertex->featured = true;
+        if (halfedgeIt == halfedgeMap.end())
             continue;
-        }
         it.second->oppositeHalfedge = halfedgeIt->second;
         halfedgeIt->second->oppositeHalfedge = it.second;
     }
@@ -662,6 +659,7 @@ void HalfedgeMesh::featureHalfedge(Halfedge *halfedge, double radians)
     
     auto &opposite = halfedge->oppositeHalfedge;
     if (nullptr == opposite) {
+        halfedge->startVertex->featured = true;
         halfedge->featureState = 1;
         return;
     }
@@ -674,6 +672,24 @@ void HalfedgeMesh::featureHalfedge(Halfedge *halfedge, double radians)
     }
     
     halfedge->featureState = opposite->featureState = 0;
+}
+
+void HalfedgeMesh::featureBoundaries()
+{
+    for (Face *face = m_firstFace; nullptr != face; face = face->nextFace) {
+        if (face->removed)
+            continue;
+        auto &startHalfedge = face->halfedge;
+        if (nullptr == startHalfedge->previousHalfedge->oppositeHalfedge) {
+            startHalfedge->previousHalfedge->startVertex->featured = true;
+        }
+        if (nullptr == startHalfedge->oppositeHalfedge) {
+            startHalfedge->startVertex->featured = true;
+        }
+        if (nullptr == startHalfedge->nextHalfedge->oppositeHalfedge) {
+            startHalfedge->nextHalfedge->startVertex->featured = true;
+        }
+    }
 }
 
 void HalfedgeMesh::featureEdges(double radians)

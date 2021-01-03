@@ -84,6 +84,7 @@ public:
     void updateVertexNormals();
     void updateTriangleNormals();
     void featureEdges(double radians);
+    void featureBoundaries();
 private:
     Vertex *m_firstVertex = nullptr;
     Vertex *m_lastVertex = nullptr;
