@@ -41,6 +41,7 @@ public:
         bool removed = false;
         size_t debugIndex = 0;
         size_t outputIndex = 0;
+        bool featured = false;
         Vertex *_allocLink = nullptr;
     };
 
@@ -49,6 +50,7 @@ public:
         Halfedge *halfedge = nullptr;
         Face *previousFace = nullptr;
         Face *nextFace = nullptr;
+        Vector3 _normal;
         bool removed = false;
         size_t debugIndex = 0;
         Face *_allocLink = nullptr;
@@ -61,6 +63,7 @@ public:
         Halfedge *nextHalfedge = nullptr;
         Halfedge *previousHalfedge = nullptr;
         Halfedge *oppositeHalfedge = nullptr;
+        int featureState = -1;
         size_t debugIndex = 0;
         Halfedge *_allocLink = nullptr;
     };
@@ -79,6 +82,8 @@ public:
     Vertex *moveToNextVertex(Vertex *vertex);
     void updateVertexValences();
     void updateVertexNormals();
+    void updateTriangleNormals();
+    void featureEdges(double radians);
 private:
     Vertex *m_firstVertex = nullptr;
     Vertex *m_lastVertex = nullptr;
@@ -130,6 +135,7 @@ private:
         double maxEdgeLengthSquared);
     void collectVerticesAroundVertex(Vertex *vertex,
         std::set<Vertex *> *vertices);
+    void featureHalfedge(Halfedge *halfedge, double radians);
 };
 
 #endif

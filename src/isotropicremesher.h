@@ -32,12 +32,11 @@ class IsotropicRemesher
 {
 public:
     IsotropicRemesher(const std::vector<Vector3> *vertices,
-            const std::vector<std::vector<size_t>> *triangles) :
-        m_vertices(vertices),
-        m_triangles(triangles)
-    {
-    }
+            const std::vector<std::vector<size_t>> *triangles);
     ~IsotropicRemesher();
+    double initialAverageEdgeLength();
+    void setSharpEdgeIncludedAngle(double degrees);
+    void setTargetEdgeLength(double edgeLength);
     void remesh(size_t iteration);
     HalfedgeMesh *remeshedHalfedgeMesh();
     
@@ -48,6 +47,9 @@ private:
     HalfedgeMesh *m_halfedgeMesh = nullptr;
     std::vector<AxisAlignedBoudingBox> *m_triangleBoxes = nullptr;
     AxisAlignedBoudingBoxTree *m_axisAlignedBoundingBoxTree = nullptr;
+    double m_sharpEdgeThresholdRadians = 0;
+    double m_targetEdgeLength = 0;
+    double m_initialAverageEdgeLength = 0;
     
     void addTriagleToAxisAlignedBoundingBox(const std::vector<size_t> &triangle, AxisAlignedBoudingBox *box)
     {

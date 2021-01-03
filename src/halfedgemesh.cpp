@@ -276,7 +276,12 @@ void HalfedgeMesh::breakEdge(HalfedgeMesh::Halfedge *halfedge)
     breakPointVertex->position = (halfedge->startVertex->position +
         halfedge->nextHalfedge->startVertex->position) * 0.5;
         
-    //std::cout << "Break first half:" << leftOldFace->debugIndex << " halfedge:" << (int)halfedge << std::endl;
+    breakPointVertex->featured = halfedge->startVertex->featured &&
+        halfedge->nextHalfedge->startVertex->featured;
+        
+    //std::cout << "Break point:" << breakPointVertex->debugIndex << " at:" << breakPointVertex->position << std::endl;
+        
+    //std::cout << "Break first half:" << leftOldFace->debugIndex << " halfedge:" << halfedge->debugIndex << std::endl;
     
     std::vector<Halfedge *> leftNewFaceHalfedges;
     std::vector<Halfedge *> leftOldFaceHalfedges;
@@ -284,7 +289,7 @@ void HalfedgeMesh::breakEdge(HalfedgeMesh::Halfedge *halfedge)
         leftNewFaceHalfedges, leftOldFaceHalfedges);
     
     if (nullptr != rightOldFace) {
-        //std::cout << "Break second half:" << rightOldFace->debugIndex << " halfedge:" << (int)oppositeHalfedge << std::endl;
+        //std::cout << "Break second half:" << rightOldFace->debugIndex << " halfedge:" << oppositeHalfedge->debugIndex << std::endl;
         
         std::vector<Halfedge *> rightNewFaceHalfedges;
         std::vector<Halfedge *> rightOldFaceHalfedges;
@@ -603,6 +608,18 @@ void HalfedgeMesh::updateVertexValences()
     }
 }
 
+void HalfedgeMesh::updateTriangleNormals()
+{
+    for (Face *face = m_firstFace; nullptr != face; face = face->nextFace) {
+        if (face->removed)
+            continue;
+        auto &startHalfedge = face->halfedge;
+        face->_normal = Vector3::normal(startHalfedge->previousHalfedge->startVertex->position,
+            startHalfedge->startVertex->position,
+            startHalfedge->nextHalfedge->startVertex->position);
+    }
+}
+
 void HalfedgeMesh::updateVertexNormals()
 {
     for (Vertex *vertex = m_firstVertex; nullptr != vertex; vertex = vertex->nextVertex) {
@@ -615,9 +632,7 @@ void HalfedgeMesh::updateVertexNormals()
         if (face->removed)
             continue;
         auto &startHalfedge = face->halfedge;
-        Vector3 faceNormal = Vector3::normal(startHalfedge->previousHalfedge->startVertex->position,
-                startHalfedge->startVertex->position,
-                startHalfedge->nextHalfedge->startVertex->position) *
+        Vector3 faceNormal = face->_normal *
             Vector3::area(startHalfedge->previousHalfedge->startVertex->position,
                 startHalfedge->startVertex->position,
                 startHalfedge->nextHalfedge->startVertex->position);
@@ -633,4 +648,35 @@ void HalfedgeMesh::updateVertexNormals()
     }
 }
 
+void HalfedgeMesh::featureHalfedge(Halfedge *halfedge, double radians)
+{
+    if (-1 != halfedge->featureState)
+        return;
+    
+    auto &opposite = halfedge->oppositeHalfedge;
+    if (nullptr == opposite) {
+        halfedge->featureState = 1;
+        return;
+    }
+    
+    if (Vector3::angle(halfedge->leftFace->_normal, 
+            opposite->leftFace->_normal) >= radians) {
+        halfedge->featureState = opposite->featureState = 1;
+        halfedge->startVertex->featured = opposite->startVertex->featured = true;
+        return;
+    }
+    
+    halfedge->featureState = opposite->featureState = 0;
+}
 
+void HalfedgeMesh::featureEdges(double radians)
+{
+    for (Face *face = m_firstFace; nullptr != face; face = face->nextFace) {
+        if (face->removed)
+            continue;
+        auto &startHalfedge = face->halfedge;
+        featureHalfedge(startHalfedge->previousHalfedge, radians);
+        featureHalfedge(startHalfedge, radians);
+        featureHalfedge(startHalfedge->nextHalfedge, radians);
+    }
+}
