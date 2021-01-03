@@ -76,12 +76,12 @@ int main(int argc, char **argv)
     std::vector<Vector3> inputVertices;
     std::vector<std::vector<size_t>> inputTriangles;
     
-    loadObj("../../cube-sphere.obj", inputVertices, inputTriangles);
+    loadObj("../../gargoyle.obj", inputVertices, inputTriangles);
     
     IsotropicRemesher isotropicRemesher(&inputVertices, &inputTriangles);
     isotropicRemesher.setSharpEdgeIncludedAngle(90);
-    isotropicRemesher.setTargetEdgeLength(isotropicRemesher.initialAverageEdgeLength() * 0.3);
-    isotropicRemesher.remesh(5);
+    isotropicRemesher.setTargetEdgeLength(isotropicRemesher.initialAverageEdgeLength());
+    isotropicRemesher.remesh(3);
     
     FILE *fp = fopen("debug.obj", "wb");
     size_t outputIndex = 0;

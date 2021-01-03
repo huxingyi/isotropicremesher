@@ -440,8 +440,12 @@ void HalfedgeMesh::relaxVertex(Vertex *vertex)
     } while (loopHalfedge != startHalfedge);
     
     position /= vertex->_valence;
-
-    vertex->position = Vector3::projectPointOnLine(vertex->position, position, position + vertex->_normal);
+    
+    position = Vector3::projectPointOnLine(vertex->position, position, position + vertex->_normal);
+    if (position.containsNan() || position.containsInf())
+        return;
+    
+    vertex->position = position;
 }
 
 bool HalfedgeMesh::flipEdge(Halfedge *halfedge)

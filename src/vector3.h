@@ -193,6 +193,20 @@ public:
             Double::isZero(m_data[2]);
     }
     
+    inline bool containsNan() const
+    {
+        return std::isnan(m_data[0]) ||
+            std::isnan(m_data[1]) ||
+            std::isnan(m_data[2]);
+    }
+    
+    inline bool containsInf() const
+    {
+        return std::isinf(m_data[0]) ||
+            std::isinf(m_data[1]) ||
+            std::isinf(m_data[2]);
+    }
+    
     inline Vector3 &operator+=(const Vector3 &other)
     {
         m_data[0] += other.x();

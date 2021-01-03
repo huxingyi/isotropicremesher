@@ -108,6 +108,7 @@ void IsotropicRemesher::remesh(size_t iteration)
     bool skipSplitOnce = false;
     if (m_sharpEdgeThresholdRadians > 0) {
         skipSplitOnce = true;
+        //std::cout << "Presplit long edges" << std::endl;
         splitLongEdges(maxTargetLengthSquared);
         m_halfedgeMesh->updateTriangleNormals();
         m_halfedgeMesh->featureEdges(m_sharpEdgeThresholdRadians);
@@ -118,11 +119,16 @@ void IsotropicRemesher::remesh(size_t iteration)
         if (skipSplitOnce) {
             skipSplitOnce = false;
         } else {
+            //std::cout << "Split long edges" << std::endl;
             splitLongEdges(maxTargetLengthSquared);
         }
+        //std::cout << "Collapse short edges" << std::endl;
         collapseShortEdges(minTargetLengthSquared, maxTargetLengthSquared);
+        //std::cout << "Flip edges" << std::endl;
         flipEdges();
+        //std::cout << "Shift vertices" << std::endl;
         shiftVertices();
+        //std::cout << "Project vertices" << std::endl;
         projectVertices();
     }
     
