@@ -99,8 +99,11 @@ HalfedgeMesh::HalfedgeMesh(const std::vector<Vector3> &vertices,
     }
     for (auto &it: halfedgeMap) {
         auto halfedgeIt = halfedgeMap.find(swapHalfedgeKey(it.first));
-        if (halfedgeIt == halfedgeMap.end())
+        if (halfedgeIt == halfedgeMap.end()) {
+            it.second->startVertex->featured = true;
+            it.second->previousHalfedge->startVertex->featured = true;
             continue;
+        }
         it.second->oppositeHalfedge = halfedgeIt->second;
         halfedgeIt->second->oppositeHalfedge = it.second;
     }
