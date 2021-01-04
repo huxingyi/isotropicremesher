@@ -61,7 +61,7 @@ private:
     
     void splitLongEdges(double maxEdgeLength);
     void collapseShortEdges(double minEdgeLengthSquared, double maxEdgeLengthSquared);
-    void flipEdges();
+    //void flipEdges();
     void shiftVertices();
     void projectVertices();
     void buildAxisAlignedBoundingBoxTree();

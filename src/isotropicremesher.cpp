@@ -141,7 +141,7 @@ void IsotropicRemesher::remesh(size_t iteration)
         //std::cout << "Collapse short edges" << std::endl;
         collapseShortEdges(minTargetLengthSquared, maxTargetLengthSquared);
         //std::cout << "Flip edges" << std::endl;
-        flipEdges();
+        //flipEdges();
         //std::cout << "Shift vertices" << std::endl;
         shiftVertices();
         //std::cout << "Project vertices" << std::endl;
@@ -210,6 +210,7 @@ void IsotropicRemesher::collapseShortEdges(double minEdgeLengthSquared, double m
     }
 }
 
+/*
 void IsotropicRemesher::flipEdges()
 {
     for (HalfedgeMesh::Face *face = m_halfedgeMesh->moveToNextFace(nullptr); 
@@ -234,6 +235,7 @@ void IsotropicRemesher::flipEdges()
         } while (halfedge != startHalfedge);
     }
 }
+*/
 
 void IsotropicRemesher::shiftVertices()
 {

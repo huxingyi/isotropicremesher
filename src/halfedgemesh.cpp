@@ -448,6 +448,7 @@ void HalfedgeMesh::relaxVertex(Vertex *vertex)
     vertex->position = position;
 }
 
+/*
 bool HalfedgeMesh::flipEdge(Halfedge *halfedge)
 {
     Vertex *topVertex = halfedge->previousHalfedge->startVertex;
@@ -536,6 +537,7 @@ bool HalfedgeMesh::flipEdge(Halfedge *halfedge)
     
     return true;
 }
+*/
 
 bool HalfedgeMesh::collapseEdge(Halfedge *halfedge, double maxEdgeLengthSquared)
 {

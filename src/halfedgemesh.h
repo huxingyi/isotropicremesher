@@ -75,7 +75,7 @@ public:
     double averageEdgeLength();
     void breakEdge(Halfedge *halfedge);
     bool collapseEdge(Halfedge *halfedge, double maxEdgeLengthSquared);
-    bool flipEdge(Halfedge *halfedge);
+    //bool flipEdge(Halfedge *halfedge);
     void relaxVertex(Vertex *vertex);
     size_t vertexValence(Vertex *vertex, bool *isBoundary=nullptr);
     Face *moveToNextFace(Face *face);
