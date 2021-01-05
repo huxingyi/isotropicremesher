@@ -108,9 +108,7 @@ void IsotropicRemesher::remesh(size_t iteration)
         double triangleArea = totalArea / m_targetTriangleCount;
         targetLength = std::sqrt(triangleArea / (0.86602540378 * 0.5));
     }
-    
-    //std::cout << "targetLength:" << targetLength << std::endl;
-    
+
     double minTargetLength = 4.0 / 5.0 * targetLength;
     double maxTargetLength= 4.0 / 3.0 * targetLength;
     
@@ -121,7 +119,6 @@ void IsotropicRemesher::remesh(size_t iteration)
     
     bool skipSplitOnce = true;
     if (m_sharpEdgeThresholdRadians > 0) {
-        //std::cout << "Presplit long edges" << std::endl;
         splitLongEdges(maxTargetLengthSquared);
         m_halfedgeMesh->updateTriangleNormals();
         m_halfedgeMesh->featureEdges(m_sharpEdgeThresholdRadians);
@@ -141,11 +138,12 @@ void IsotropicRemesher::remesh(size_t iteration)
         //std::cout << "Collapse short edges" << std::endl;
         collapseShortEdges(minTargetLengthSquared, maxTargetLengthSquared);
         //std::cout << "Flip edges" << std::endl;
-        //flipEdges();
+        flipEdges();
         //std::cout << "Shift vertices" << std::endl;
         shiftVertices();
         //std::cout << "Project vertices" << std::endl;
         projectVertices();
+        
     }
     
     //std::cout << "Done" << std::endl;
@@ -156,12 +154,10 @@ void IsotropicRemesher::splitLongEdges(double maxEdgeLengthSquared)
     for (HalfedgeMesh::Face *face = m_halfedgeMesh->moveToNextFace(nullptr); 
             nullptr != face; 
             ) {
-        //std::cout << "Face:" << face->debugIndex << std::endl;
         const auto &startHalfedge = face->halfedge;
         face = m_halfedgeMesh->moveToNextFace(face);
         HalfedgeMesh::Halfedge *halfedge = startHalfedge;
         do {
-            //std::cout << "halfedge:" << halfedge->debugIndex << std::endl;
             const auto &nextHalfedge = halfedge->nextHalfedge;
             double lengthSquared = (halfedge->startVertex->position - nextHalfedge->startVertex->position).lengthSquared();
             if (lengthSquared > maxEdgeLengthSquared) {
@@ -187,41 +183,35 @@ void IsotropicRemesher::collapseShortEdges(double minEdgeLengthSquared, double m
             face = m_halfedgeMesh->moveToNextFace(face);
             continue;
         }
-        //std::cout << "Face:" << face->debugIndex << std::endl;
+        size_t f = face->debugIndex;
         const auto &startHalfedge = face->halfedge;
         face = m_halfedgeMesh->moveToNextFace(face);
         HalfedgeMesh::Halfedge *halfedge = startHalfedge;
+        size_t loopCount = 0;
         do {
-            //std::cout << "halfedge:" << halfedge->debugIndex << std::endl;
             const auto &nextHalfedge = halfedge->nextHalfedge;
             double lengthSquared = (halfedge->startVertex->position - nextHalfedge->startVertex->position).lengthSquared();
             if (lengthSquared < minEdgeLengthSquared) {
                 if (!halfedge->startVertex->featured && !nextHalfedge->startVertex->featured) {
-                    //std::cout << "Collapse edge at lengthSquared:" << lengthSquared << " minEdgeLengthSquared:" << minEdgeLengthSquared << std::endl;
                     if (m_halfedgeMesh->collapseEdge(halfedge, maxEdgeLengthSquared)) {
-                        //std::cout << "Collapsed" << std::endl;
                         break;
                     }
                 }
-                //std::cout << "Not collapse" << std::endl;
             }
             halfedge = nextHalfedge;
         } while (halfedge != startHalfedge);
     }
 }
 
-/*
 void IsotropicRemesher::flipEdges()
 {
     for (HalfedgeMesh::Face *face = m_halfedgeMesh->moveToNextFace(nullptr); 
             nullptr != face; 
             ) {
-        //std::cout << "Face:" << face->debugIndex << std::endl;
         const auto &startHalfedge = face->halfedge;
         face = m_halfedgeMesh->moveToNextFace(face);
         HalfedgeMesh::Halfedge *halfedge = startHalfedge;
         do {
-            //std::cout << "halfedge:" << halfedge->debugIndex << std::endl;
             const auto &nextHalfedge = halfedge->nextHalfedge;
             if (nullptr != halfedge->oppositeHalfedge) {
                 if (!halfedge->startVertex->featured && !nextHalfedge->startVertex->featured) {
@@ -229,13 +219,11 @@ void IsotropicRemesher::flipEdges()
                         break;
                     }
                 }
-                //std::cout << "valence:" << m_halfedgeMesh->vertexValence(halfedge->startVertex) << std::endl;
             }
             halfedge = nextHalfedge;
         } while (halfedge != startHalfedge);
     }
 }
-*/
 
 void IsotropicRemesher::shiftVertices()
 {
@@ -263,21 +251,17 @@ void IsotropicRemesher::projectVertices()
         const auto &startHalfedge = vertex->firstHalfedge;
         if (nullptr == startHalfedge)
             continue;
-        
-        //std::cout << "Project vertex:" << vertex->debugIndex << std::endl;
-        
+
         std::vector<AxisAlignedBoudingBox> rayBox(1);
         auto &box = rayBox[0];
         box.update(vertex->position);
 
         HalfedgeMesh::Halfedge *loopHalfedge = startHalfedge;
         do {
-            //std::cout << "Add point:" << loopHalfedge->nextHalfedge->startVertex->debugIndex << std::endl;
             box.update(loopHalfedge->nextHalfedge->startVertex->position);
             if (nullptr == loopHalfedge->oppositeHalfedge) {
                 loopHalfedge = startHalfedge;
                 do {
-                    //std::cout << "Add point:" << loopHalfedge->previousHalfedge->startVertex->debugIndex << std::endl;
                     box.update(loopHalfedge->previousHalfedge->startVertex->position);
                     loopHalfedge = loopHalfedge->previousHalfedge->oppositeHalfedge;
                     if (nullptr == loopHalfedge)
@@ -287,8 +271,6 @@ void IsotropicRemesher::projectVertices()
             }
             loopHalfedge = loopHalfedge->oppositeHalfedge->nextHalfedge;
         } while (loopHalfedge != startHalfedge);
-        
-        //std::cout << "Do test..." << std::endl;
         
         AxisAlignedBoudingBoxTree testTree(&rayBox,
             {0},
@@ -320,7 +302,6 @@ void IsotropicRemesher::projectVertices()
                 if (Vector3::dotProduct(normals[0], normals[1]) > 0 && 
                         Vector3::dotProduct(normals[0], normals[2]) > 0) {
                     hits.push_back({intersection, (vertex->position - intersection).lengthSquared()});
-                    //std::cout << "Vertex[" << vertex->debugIndex << "]: potential intersect " << it.first << std::endl;
                 }
             }
         }
@@ -331,7 +312,5 @@ void IsotropicRemesher::projectVertices()
                 return first.second < second.second;
             })->first;
         }
-        
-        //std::cout << "Done test" << std::endl;
     }
 }

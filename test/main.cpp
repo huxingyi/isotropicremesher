@@ -80,8 +80,8 @@ int main(int argc, char **argv)
     
     IsotropicRemesher isotropicRemesher(&inputVertices, &inputTriangles);
     isotropicRemesher.setSharpEdgeIncludedAngle(90);
-    //isotropicRemesher.setTargetEdgeLength(isotropicRemesher.initialAverageEdgeLength());
-    isotropicRemesher.setTargetTriangleCount(50000);
+    isotropicRemesher.setTargetEdgeLength(isotropicRemesher.initialAverageEdgeLength() * 0.5);
+    //isotropicRemesher.setTargetTriangleCount(50000);
     isotropicRemesher.remesh(3);
     
     FILE *fp = fopen("debug.obj", "wb");

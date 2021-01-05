@@ -35,6 +35,7 @@ public:
         Halfedge *firstHalfedge = nullptr;
         Vertex *previousVertex = nullptr;
         Vertex *nextVertex = nullptr;
+        int initialFaces = 0;
         int _valence = -1;
         bool _isBoundary = false;
         Vector3 _normal;
@@ -75,7 +76,7 @@ public:
     double averageEdgeLength();
     void breakEdge(Halfedge *halfedge);
     bool collapseEdge(Halfedge *halfedge, double maxEdgeLengthSquared);
-    //bool flipEdge(Halfedge *halfedge);
+    bool flipEdge(Halfedge *halfedge);
     void relaxVertex(Vertex *vertex);
     size_t vertexValence(Vertex *vertex, bool *isBoundary=nullptr);
     Face *moveToNextFace(Face *face);
@@ -129,13 +130,13 @@ private:
         Vertex *breakPointVertex,
         std::vector<Halfedge *> &leftNewFaceHalfedges,
         std::vector<Halfedge *> &leftOldFaceHalfedges);
-    void changeVertexStartHalfedgeFrom(Vertex *vertex, Halfedge *halfedge);
     void pointerVertexToNewVertex(Vertex *vertex, Vertex *replacement);
     bool testLengthSquaredAroundVertex(Vertex *vertex, 
         const Vector3 &target, 
         double maxEdgeLengthSquared);
     void collectVerticesAroundVertex(Vertex *vertex,
         std::set<Vertex *> *vertices);
+    //bool testVertexAround(Vertex *vertex, Vertex *testVertex);
     void featureHalfedge(Halfedge *halfedge, double radians);
 };
 
