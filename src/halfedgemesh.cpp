@@ -517,30 +517,6 @@ bool HalfedgeMesh::flipEdge(Halfedge *halfedge)
     if (newDeviation >= oldDeviation)
         return false;
     
-    double edgeLengthSquared = (leftVertex->position - rightVertex->position).lengthSquared();
-    double leftTopLengthSquared = (leftVertex->position - topVertex->position).lengthSquared();
-    if (edgeLengthSquared <= leftTopLengthSquared)
-        return false;
-    double rightTopLengthSquared = (rightVertex->position - topVertex->position).lengthSquared();
-    if (edgeLengthSquared <= rightTopLengthSquared)
-        return false;
-    double leftBottomLengthSquared = (leftVertex->position - bottomVertex->position).lengthSquared();
-    if (edgeLengthSquared <= leftBottomLengthSquared)
-        return false;
-    double rightBottomLengthSquared = (rightVertex->position - bottomVertex->position).lengthSquared();
-    if (edgeLengthSquared <= rightBottomLengthSquared)
-        return false;
-
-    double newEdgeLengthSquared = (topVertex->position - bottomVertex->position).lengthSquared();
-    if (newEdgeLengthSquared <= leftTopLengthSquared)
-        return false;
-    if (newEdgeLengthSquared <= rightTopLengthSquared)
-        return false;
-    if (newEdgeLengthSquared <= leftBottomLengthSquared)
-        return false;
-    if (newEdgeLengthSquared <= rightBottomLengthSquared)
-        return false;
-
     Halfedge *opposite = halfedge->oppositeHalfedge;
     
     Face *topFace = halfedge->leftFace;
