@@ -21,9 +21,9 @@
  */
 #include <unordered_map>
 #include <algorithm>
-#include "halfedgemesh.h"
+#include "isotropichalfedgemesh.h"
 
-HalfedgeMesh::~HalfedgeMesh()
+IsotropicHalfedgeMesh::~IsotropicHalfedgeMesh()
 {
     while (nullptr != m_vertexAllocLink) {
         Vertex *vertex = m_vertexAllocLink;
@@ -44,7 +44,7 @@ HalfedgeMesh::~HalfedgeMesh()
     }
 }
 
-HalfedgeMesh::HalfedgeMesh(const std::vector<Vector3> &vertices,
+IsotropicHalfedgeMesh::IsotropicHalfedgeMesh(const std::vector<Vector3> &vertices,
     const std::vector<std::vector<size_t>> &faces)
 {
     std::vector<Vertex *> halfedgeVertices;
@@ -120,7 +120,7 @@ HalfedgeMesh::HalfedgeMesh(const std::vector<Vector3> &vertices,
     }
 }
 
-void HalfedgeMesh::linkFaceHalfedges(std::vector<HalfedgeMesh::Halfedge *> &halfedges)
+void IsotropicHalfedgeMesh::linkFaceHalfedges(std::vector<IsotropicHalfedgeMesh::Halfedge *> &halfedges)
 {
     for (size_t i = 0; i < halfedges.size(); ++i) {
         size_t j = (i + 1) % halfedges.size();
@@ -129,14 +129,14 @@ void HalfedgeMesh::linkFaceHalfedges(std::vector<HalfedgeMesh::Halfedge *> &half
     }
 }
 
-void HalfedgeMesh::updateFaceHalfedgesLeftFace(std::vector<HalfedgeMesh::Halfedge *> &halfedges,
-    HalfedgeMesh::Face *leftFace)
+void IsotropicHalfedgeMesh::updateFaceHalfedgesLeftFace(std::vector<IsotropicHalfedgeMesh::Halfedge *> &halfedges,
+    IsotropicHalfedgeMesh::Face *leftFace)
 {
     for (auto &it: halfedges)
         it->leftFace = leftFace;
 }
 
-void HalfedgeMesh::linkHalfedgePair(HalfedgeMesh::Halfedge *first, HalfedgeMesh::Halfedge *second)
+void IsotropicHalfedgeMesh::linkHalfedgePair(IsotropicHalfedgeMesh::Halfedge *first, IsotropicHalfedgeMesh::Halfedge *second)
 {
     if (nullptr != first)
         first->oppositeHalfedge = second;
@@ -144,7 +144,7 @@ void HalfedgeMesh::linkHalfedgePair(HalfedgeMesh::Halfedge *first, HalfedgeMesh:
         second->oppositeHalfedge = first;
 }
 
-double HalfedgeMesh::averageEdgeLength()
+double IsotropicHalfedgeMesh::averageEdgeLength()
 {
     double totalLength = 0.0;
     size_t halfedgeCount = 0;
@@ -162,7 +162,7 @@ double HalfedgeMesh::averageEdgeLength()
     return totalLength / halfedgeCount;
 }
 
-HalfedgeMesh::Face *HalfedgeMesh::newFace()
+IsotropicHalfedgeMesh::Face *IsotropicHalfedgeMesh::newFace()
 {
     Face *face = new Face;
     
@@ -180,7 +180,7 @@ HalfedgeMesh::Face *HalfedgeMesh::newFace()
     return face;
 }
 
-HalfedgeMesh::Vertex *HalfedgeMesh::newVertex()
+IsotropicHalfedgeMesh::Vertex *IsotropicHalfedgeMesh::newVertex()
 {
     Vertex *vertex = new Vertex;
     
@@ -198,7 +198,7 @@ HalfedgeMesh::Vertex *HalfedgeMesh::newVertex()
     return vertex;
 }
 
-HalfedgeMesh::Halfedge *HalfedgeMesh::newHalfedge()
+IsotropicHalfedgeMesh::Halfedge *IsotropicHalfedgeMesh::newHalfedge()
 {
     Halfedge *halfedge = new Halfedge;
     
@@ -209,7 +209,7 @@ HalfedgeMesh::Halfedge *HalfedgeMesh::newHalfedge()
     return halfedge;
 }
 
-HalfedgeMesh::Face *HalfedgeMesh::moveToNextFace(HalfedgeMesh::Face *face)
+IsotropicHalfedgeMesh::Face *IsotropicHalfedgeMesh::moveToNextFace(IsotropicHalfedgeMesh::Face *face)
 {
     if (nullptr == face) {
         face = m_firstFace;
@@ -224,7 +224,7 @@ HalfedgeMesh::Face *HalfedgeMesh::moveToNextFace(HalfedgeMesh::Face *face)
     return face;
 }
 
-HalfedgeMesh::Vertex *HalfedgeMesh::moveToNextVertex(HalfedgeMesh::Vertex *vertex)
+IsotropicHalfedgeMesh::Vertex *IsotropicHalfedgeMesh::moveToNextVertex(IsotropicHalfedgeMesh::Vertex *vertex)
 {
     if (nullptr == vertex) {
         vertex = m_firstVertex;
@@ -239,11 +239,11 @@ HalfedgeMesh::Vertex *HalfedgeMesh::moveToNextVertex(HalfedgeMesh::Vertex *verte
     return vertex;
 }
 
-void HalfedgeMesh::breakFace(HalfedgeMesh::Face *leftOldFace,
-    HalfedgeMesh::Halfedge *halfedge,
-    HalfedgeMesh::Vertex *breakPointVertex,
-    std::vector<HalfedgeMesh::Halfedge *> &leftNewFaceHalfedges,
-    std::vector<HalfedgeMesh::Halfedge *> &leftOldFaceHalfedges)
+void IsotropicHalfedgeMesh::breakFace(IsotropicHalfedgeMesh::Face *leftOldFace,
+    IsotropicHalfedgeMesh::Halfedge *halfedge,
+    IsotropicHalfedgeMesh::Vertex *breakPointVertex,
+    std::vector<IsotropicHalfedgeMesh::Halfedge *> &leftNewFaceHalfedges,
+    std::vector<IsotropicHalfedgeMesh::Halfedge *> &leftOldFaceHalfedges)
 {
     std::vector<Halfedge *> leftFaceHalfedges = {
         halfedge->previousHalfedge,
@@ -277,7 +277,7 @@ void HalfedgeMesh::breakFace(HalfedgeMesh::Face *leftOldFace,
     leftOldFace->halfedge = leftOldFaceHalfedges[0];
 }
 
-void HalfedgeMesh::breakEdge(HalfedgeMesh::Halfedge *halfedge)
+void IsotropicHalfedgeMesh::breakEdge(IsotropicHalfedgeMesh::Halfedge *halfedge)
 {
     Face *leftOldFace = halfedge->leftFace;
     Halfedge *oppositeHalfedge = halfedge->oppositeHalfedge;
@@ -309,7 +309,7 @@ void HalfedgeMesh::breakEdge(HalfedgeMesh::Halfedge *halfedge)
 }
 
 /*
-bool HalfedgeMesh::testVertexAround(Vertex *vertex, Vertex *testVertex)
+bool IsotropicHalfedgeMesh::testVertexAround(Vertex *vertex, Vertex *testVertex)
 {
     const auto &startHalfedge = vertex->firstHalfedge;
     if (nullptr == startHalfedge)
@@ -337,7 +337,7 @@ bool HalfedgeMesh::testVertexAround(Vertex *vertex, Vertex *testVertex)
 }
 */
 
-void HalfedgeMesh::collectVerticesAroundVertex(Vertex *vertex,
+void IsotropicHalfedgeMesh::collectVerticesAroundVertex(Vertex *vertex,
     std::set<Vertex *> *vertices)
 {
     const auto &startHalfedge = vertex->firstHalfedge;
@@ -361,7 +361,7 @@ void HalfedgeMesh::collectVerticesAroundVertex(Vertex *vertex,
     } while (loopHalfedge != startHalfedge);
 }
 
-size_t HalfedgeMesh::vertexValence(Vertex *vertex, bool *isBoundary)
+size_t IsotropicHalfedgeMesh::vertexValence(Vertex *vertex, bool *isBoundary)
 {
     const auto &startHalfedge = vertex->firstHalfedge;
     if (nullptr == startHalfedge)
@@ -390,7 +390,7 @@ size_t HalfedgeMesh::vertexValence(Vertex *vertex, bool *isBoundary)
     return valence;
 }
 
-bool HalfedgeMesh::testLengthSquaredAroundVertex(Vertex *vertex, 
+bool IsotropicHalfedgeMesh::testLengthSquaredAroundVertex(Vertex *vertex, 
     const Vector3 &target, 
     double maxEdgeLengthSquared)
 {
@@ -423,7 +423,7 @@ bool HalfedgeMesh::testLengthSquaredAroundVertex(Vertex *vertex,
     return false;
 }
 
-void HalfedgeMesh::pointerVertexToNewVertex(Vertex *vertex, Vertex *replacement)
+void IsotropicHalfedgeMesh::pointerVertexToNewVertex(Vertex *vertex, Vertex *replacement)
 {
     const auto &startHalfedge = vertex->firstHalfedge;
     if (nullptr == startHalfedge)
@@ -446,7 +446,7 @@ void HalfedgeMesh::pointerVertexToNewVertex(Vertex *vertex, Vertex *replacement)
     } while (loopHalfedge != startHalfedge);
 }
 
-void HalfedgeMesh::relaxVertex(Vertex *vertex)
+void IsotropicHalfedgeMesh::relaxVertex(Vertex *vertex)
 {
     if (vertex->_isBoundary || vertex->_valence <= 0)
         return;
@@ -474,7 +474,7 @@ void HalfedgeMesh::relaxVertex(Vertex *vertex)
     vertex->position = projectedPosition;
 }
 
-bool HalfedgeMesh::flipEdge(Halfedge *halfedge)
+bool IsotropicHalfedgeMesh::flipEdge(Halfedge *halfedge)
 {
     Vertex *topVertex = halfedge->previousHalfedge->startVertex;
     Vertex *bottomVertex = halfedge->oppositeHalfedge->previousHalfedge->startVertex;
@@ -554,7 +554,7 @@ bool HalfedgeMesh::flipEdge(Halfedge *halfedge)
     return true;
 }
 
-bool HalfedgeMesh::collapseEdge(Halfedge *halfedge, double maxEdgeLengthSquared)
+bool IsotropicHalfedgeMesh::collapseEdge(Halfedge *halfedge, double maxEdgeLengthSquared)
 {   
     Halfedge *opposite = halfedge->oppositeHalfedge;
     
@@ -627,7 +627,7 @@ bool HalfedgeMesh::collapseEdge(Halfedge *halfedge, double maxEdgeLengthSquared)
     return true;
 }
 
-void HalfedgeMesh::updateVertexValences()
+void IsotropicHalfedgeMesh::updateVertexValences()
 {
     for (Vertex *vertex = m_firstVertex; nullptr != vertex; vertex = vertex->nextVertex) {
         if (vertex->removed)
@@ -637,7 +637,7 @@ void HalfedgeMesh::updateVertexValences()
     }
 }
 
-void HalfedgeMesh::updateTriangleNormals()
+void IsotropicHalfedgeMesh::updateTriangleNormals()
 {
     for (Face *face = m_firstFace; nullptr != face; face = face->nextFace) {
         if (face->removed)
@@ -649,7 +649,7 @@ void HalfedgeMesh::updateTriangleNormals()
     }
 }
 
-void HalfedgeMesh::updateVertexNormals()
+void IsotropicHalfedgeMesh::updateVertexNormals()
 {
     for (Vertex *vertex = m_firstVertex; nullptr != vertex; vertex = vertex->nextVertex) {
         if (vertex->removed)
@@ -677,7 +677,7 @@ void HalfedgeMesh::updateVertexNormals()
     }
 }
 
-void HalfedgeMesh::featureHalfedge(Halfedge *halfedge, double radians)
+void IsotropicHalfedgeMesh::featureHalfedge(Halfedge *halfedge, double radians)
 {
     if (-1 != halfedge->featureState)
         return;
@@ -699,7 +699,7 @@ void HalfedgeMesh::featureHalfedge(Halfedge *halfedge, double radians)
     halfedge->featureState = opposite->featureState = 0;
 }
 
-void HalfedgeMesh::featureBoundaries()
+void IsotropicHalfedgeMesh::featureBoundaries()
 {
     for (Face *face = m_firstFace; nullptr != face; face = face->nextFace) {
         if (face->removed)
@@ -717,7 +717,7 @@ void HalfedgeMesh::featureBoundaries()
     }
 }
 
-void HalfedgeMesh::featureEdges(double radians)
+void IsotropicHalfedgeMesh::featureEdges(double radians)
 {
     for (Face *face = m_firstFace; nullptr != face; face = face->nextFace) {
         if (face->removed)

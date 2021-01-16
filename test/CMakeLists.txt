@@ -23,8 +23,8 @@ add_executable(test-isotropicremesher
     ../src/axisalignedboundingboxtree.cpp
     ../src/axisalignedboundingboxtree.h
     
-    ../src/halfedgemesh.cpp
-    ../src/halfedgemesh.h
+    ../src/isotropichalfedgemesh.cpp
+    ../src/isotropichalfedgemesh.h
     
     ../src/isotropicremesher.cpp
     ../src/isotropicremesher.h

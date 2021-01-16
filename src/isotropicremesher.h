@@ -19,14 +19,14 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  *  SOFTWARE.
  */
-#ifndef ISOTROPICREMESHER_H
-#define ISOTROPICREMESHER_H
+#ifndef ISOTROPIC_REMESHER_H
+#define ISOTROPIC_REMESHER_H
 #include <vector>
 #include "vector3.h"
 #include "axisalignedboundingboxtree.h"
 #include "axisalignedboundingbox.h"
 
-class HalfedgeMesh;
+class IsotropicHalfedgeMesh;
 
 class IsotropicRemesher
 {
@@ -39,13 +39,13 @@ public:
     void setTargetEdgeLength(double edgeLength);
     void setTargetTriangleCount(size_t triangleCount);
     void remesh(size_t iteration);
-    HalfedgeMesh *remeshedHalfedgeMesh();
+    IsotropicHalfedgeMesh *remeshedHalfedgeMesh();
     
 private:
     const std::vector<Vector3> *m_vertices = nullptr;
     const std::vector<std::vector<size_t>> *m_triangles = nullptr;
     std::vector<Vector3> *m_triangleNormals = nullptr;
-    HalfedgeMesh *m_halfedgeMesh = nullptr;
+    IsotropicHalfedgeMesh *m_halfedgeMesh = nullptr;
     std::vector<AxisAlignedBoudingBox> *m_triangleBoxes = nullptr;
     AxisAlignedBoudingBoxTree *m_axisAlignedBoundingBoxTree = nullptr;
     double m_sharpEdgeThresholdRadians = 0;

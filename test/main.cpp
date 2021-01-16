@@ -3,7 +3,7 @@
 #include <chrono>
 #include "vector3.h"
 #include "isotropicremesher.h"
-#include "halfedgemesh.h"
+#include "isotropichalfedgemesh.h"
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
 
@@ -79,15 +79,15 @@ int main(int argc, char **argv)
     loadObj("../../gargoyle.obj", inputVertices, inputTriangles);
     
     IsotropicRemesher isotropicRemesher(&inputVertices, &inputTriangles);
-    isotropicRemesher.setSharpEdgeIncludedAngle(90);
-    isotropicRemesher.setTargetEdgeLength(isotropicRemesher.initialAverageEdgeLength() * 0.5);
-    //isotropicRemesher.setTargetTriangleCount(50000);
+    //isotropicRemesher.setSharpEdgeIncludedAngle(90);
+    //isotropicRemesher.setTargetEdgeLength(isotropicRemesher.initialAverageEdgeLength() * 0.5);
+    isotropicRemesher.setTargetTriangleCount(50000);
     isotropicRemesher.remesh(3);
     
     FILE *fp = fopen("debug.obj", "wb");
     size_t outputIndex = 0;
-    HalfedgeMesh *halfedgeMesh = isotropicRemesher.remeshedHalfedgeMesh();
-    for (HalfedgeMesh::Vertex *vertex = halfedgeMesh->moveToNextVertex(nullptr); 
+    IsotropicHalfedgeMesh *halfedgeMesh = isotropicRemesher.remeshedHalfedgeMesh();
+    for (IsotropicHalfedgeMesh::Vertex *vertex = halfedgeMesh->moveToNextVertex(nullptr); 
             nullptr != vertex;
             vertex = halfedgeMesh->moveToNextVertex(vertex)) {
         vertex->outputIndex = outputIndex++;
@@ -96,7 +96,7 @@ int main(int argc, char **argv)
             vertex->position[1],
             vertex->position[2]);
     }
-    for (HalfedgeMesh::Face *face = halfedgeMesh->moveToNextFace(nullptr); 
+    for (IsotropicHalfedgeMesh::Face *face = halfedgeMesh->moveToNextFace(nullptr); 
             nullptr != face;
             face = halfedgeMesh->moveToNextFace(face)) {
         fprintf(fp, "f %d %d %d\n", 

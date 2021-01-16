@@ -19,12 +19,12 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  *  SOFTWARE.
  */
-#ifndef HALFEDGE_MESH_H
-#define HALFEDGE_MESH_H
+#ifndef ISOTROPIC_HALFEDGE_MESH_H
+#define ISOTROPIC_HALFEDGE_MESH_H
 #include <set>
 #include "vector3.h"
 
-class HalfedgeMesh
+class IsotropicHalfedgeMesh
 {
 public:
     struct Halfedge;
@@ -69,9 +69,9 @@ public:
         Halfedge *_allocLink = nullptr;
     };
     
-    HalfedgeMesh(const std::vector<Vector3> &vertices,
+    IsotropicHalfedgeMesh(const std::vector<Vector3> &vertices,
         const std::vector<std::vector<size_t>> &faces);
-    ~HalfedgeMesh();
+    ~IsotropicHalfedgeMesh();
     
     double averageEdgeLength();
     void breakEdge(Halfedge *halfedge);

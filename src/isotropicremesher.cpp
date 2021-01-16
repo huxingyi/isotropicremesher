@@ -22,7 +22,7 @@
 #include <string>
 #include <iostream>
 #include "isotropicremesher.h"
-#include "halfedgemesh.h"
+#include "isotropichalfedgemesh.h"
 
 IsotropicRemesher::~IsotropicRemesher()
 {
@@ -76,7 +76,7 @@ IsotropicRemesher::IsotropicRemesher(const std::vector<Vector3> *vertices,
     m_vertices(vertices),
     m_triangles(triangles)
 {
-    m_halfedgeMesh = new HalfedgeMesh(*m_vertices, *m_triangles);
+    m_halfedgeMesh = new IsotropicHalfedgeMesh(*m_vertices, *m_triangles);
     m_initialAverageEdgeLength = m_halfedgeMesh->averageEdgeLength();
 }
 
@@ -151,12 +151,12 @@ void IsotropicRemesher::remesh(size_t iteration)
 
 void IsotropicRemesher::splitLongEdges(double maxEdgeLengthSquared)
 {
-    for (HalfedgeMesh::Face *face = m_halfedgeMesh->moveToNextFace(nullptr); 
+    for (IsotropicHalfedgeMesh::Face *face = m_halfedgeMesh->moveToNextFace(nullptr); 
             nullptr != face; 
             ) {
         const auto &startHalfedge = face->halfedge;
         face = m_halfedgeMesh->moveToNextFace(face);
-        HalfedgeMesh::Halfedge *halfedge = startHalfedge;
+        IsotropicHalfedgeMesh::Halfedge *halfedge = startHalfedge;
         do {
             const auto &nextHalfedge = halfedge->nextHalfedge;
             double lengthSquared = (halfedge->startVertex->position - nextHalfedge->startVertex->position).lengthSquared();
@@ -169,14 +169,14 @@ void IsotropicRemesher::splitLongEdges(double maxEdgeLengthSquared)
     }
 }
 
-HalfedgeMesh *IsotropicRemesher::remeshedHalfedgeMesh()
+IsotropicHalfedgeMesh *IsotropicRemesher::remeshedHalfedgeMesh()
 {
     return m_halfedgeMesh;
 }
 
 void IsotropicRemesher::collapseShortEdges(double minEdgeLengthSquared, double maxEdgeLengthSquared)
 {
-    for (HalfedgeMesh::Face *face = m_halfedgeMesh->moveToNextFace(nullptr); 
+    for (IsotropicHalfedgeMesh::Face *face = m_halfedgeMesh->moveToNextFace(nullptr); 
             nullptr != face; 
             ) {
         if (face->removed) {
@@ -186,7 +186,7 @@ void IsotropicRemesher::collapseShortEdges(double minEdgeLengthSquared, double m
         size_t f = face->debugIndex;
         const auto &startHalfedge = face->halfedge;
         face = m_halfedgeMesh->moveToNextFace(face);
-        HalfedgeMesh::Halfedge *halfedge = startHalfedge;
+        IsotropicHalfedgeMesh::Halfedge *halfedge = startHalfedge;
         size_t loopCount = 0;
         do {
             const auto &nextHalfedge = halfedge->nextHalfedge;
@@ -205,12 +205,12 @@ void IsotropicRemesher::collapseShortEdges(double minEdgeLengthSquared, double m
 
 void IsotropicRemesher::flipEdges()
 {
-    for (HalfedgeMesh::Face *face = m_halfedgeMesh->moveToNextFace(nullptr); 
+    for (IsotropicHalfedgeMesh::Face *face = m_halfedgeMesh->moveToNextFace(nullptr); 
             nullptr != face; 
             ) {
         const auto &startHalfedge = face->halfedge;
         face = m_halfedgeMesh->moveToNextFace(face);
-        HalfedgeMesh::Halfedge *halfedge = startHalfedge;
+        IsotropicHalfedgeMesh::Halfedge *halfedge = startHalfedge;
         do {
             const auto &nextHalfedge = halfedge->nextHalfedge;
             if (nullptr != halfedge->oppositeHalfedge) {
@@ -231,7 +231,7 @@ void IsotropicRemesher::shiftVertices()
     m_halfedgeMesh->updateTriangleNormals();
     m_halfedgeMesh->updateVertexNormals();
     
-    for (HalfedgeMesh::Vertex *vertex = m_halfedgeMesh->moveToNextVertex(nullptr); 
+    for (IsotropicHalfedgeMesh::Vertex *vertex = m_halfedgeMesh->moveToNextVertex(nullptr); 
             nullptr != vertex;
             vertex = m_halfedgeMesh->moveToNextVertex(vertex)) {
         if (vertex->featured)
@@ -242,7 +242,7 @@ void IsotropicRemesher::shiftVertices()
 
 void IsotropicRemesher::projectVertices()
 {
-    for (HalfedgeMesh::Vertex *vertex = m_halfedgeMesh->moveToNextVertex(nullptr); 
+    for (IsotropicHalfedgeMesh::Vertex *vertex = m_halfedgeMesh->moveToNextVertex(nullptr); 
             nullptr != vertex;
             vertex = m_halfedgeMesh->moveToNextVertex(vertex)) {
         if (vertex->featured)
@@ -256,7 +256,7 @@ void IsotropicRemesher::projectVertices()
         auto &box = rayBox[0];
         box.update(vertex->position);
 
-        HalfedgeMesh::Halfedge *loopHalfedge = startHalfedge;
+        IsotropicHalfedgeMesh::Halfedge *loopHalfedge = startHalfedge;
         do {
             box.update(loopHalfedge->nextHalfedge->startVertex->position);
             if (nullptr == loopHalfedge->oppositeHalfedge) {

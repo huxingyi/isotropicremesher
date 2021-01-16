@@ -7,7 +7,8 @@ Isotropic Remeshing of Triangulated Surface
 This repository implement the five steps of Isotropic Remeshing described in this document,
 http://graphics.stanford.edu/courses/cs468-12-spring/LectureSlides/13_Remeshing1.pdf
 
-It's under development, and is ready for test usage, **please do not use in product environment yet**.
+# Alternatives and similar libraries
+- [CGAL::Polygon_mesh_processing::isotropic_remeshing](https://doc.cgal.org/latest/Polygon_mesh_processing/group__PMP__meshing__grp.html#gad3d03890515ae8103bd32a30a3486412)  
 
 # License
 MIT License
