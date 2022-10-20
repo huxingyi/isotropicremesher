@@ -214,11 +214,11 @@ void IsotropicRemesher::flipEdges()
         do {
             const auto &nextHalfedge = halfedge->nextHalfedge;
             if (nullptr != halfedge->oppositeHalfedge) {
-                if (!halfedge->startVertex->featured && !nextHalfedge->startVertex->featured) {
+                //if (!halfedge->startVertex->featured && !nextHalfedge->startVertex->featured) {
                     if (m_halfedgeMesh->flipEdge(halfedge)) {
                         break;
                     }
-                }
+                //}
             }
             halfedge = nextHalfedge;
         } while (halfedge != startHalfedge);
@@ -234,8 +234,8 @@ void IsotropicRemesher::shiftVertices()
     for (IsotropicHalfedgeMesh::Vertex *vertex = m_halfedgeMesh->moveToNextVertex(nullptr); 
             nullptr != vertex;
             vertex = m_halfedgeMesh->moveToNextVertex(vertex)) {
-        if (vertex->featured)
-            continue;
+        //if (vertex->featured)
+        //    continue;
         m_halfedgeMesh->relaxVertex(vertex);
     }
 }
@@ -245,8 +245,8 @@ void IsotropicRemesher::projectVertices()
     for (IsotropicHalfedgeMesh::Vertex *vertex = m_halfedgeMesh->moveToNextVertex(nullptr); 
             nullptr != vertex;
             vertex = m_halfedgeMesh->moveToNextVertex(vertex)) {
-        if (vertex->featured)
-            continue;
+        //if (vertex->featured)
+        //    continue;
         
         const auto &startHalfedge = vertex->firstHalfedge;
         if (nullptr == startHalfedge)

@@ -308,57 +308,13 @@ void IsotropicHalfedgeMesh::breakEdge(IsotropicHalfedgeMesh::Halfedge *halfedge)
     }
 }
 
-/*
-bool IsotropicHalfedgeMesh::testVertexAround(Vertex *vertex, Vertex *testVertex)
-{
-    const auto &startHalfedge = vertex->firstHalfedge;
-    if (nullptr == startHalfedge)
-        return false;
-    
-    Halfedge *loopHalfedge = startHalfedge;
-    do {
-        if (loopHalfedge->nextHalfedge->startVertex == testVertex)
-            return true;
-        if (nullptr == loopHalfedge->oppositeHalfedge) {
-            loopHalfedge = startHalfedge;
-            do {
-                if (loopHalfedge->previousHalfedge->startVertex == testVertex)
-                    return true;
-                loopHalfedge = loopHalfedge->previousHalfedge->oppositeHalfedge;
-                if (nullptr == loopHalfedge)
-                    break;
-            } while (loopHalfedge != startHalfedge);
-            break;
-        }
-        loopHalfedge = loopHalfedge->oppositeHalfedge->nextHalfedge;
-    } while (loopHalfedge != startHalfedge);
-    
-    return false;
-}
-*/
-
 void IsotropicHalfedgeMesh::collectVerticesAroundVertex(Vertex *vertex,
     std::set<Vertex *> *vertices)
 {
-    const auto &startHalfedge = vertex->firstHalfedge;
-    if (nullptr == startHalfedge)
-        return;
-    
-    Halfedge *loopHalfedge = startHalfedge;
-    do {
-        vertices->insert(loopHalfedge->nextHalfedge->startVertex);
-        if (nullptr == loopHalfedge->oppositeHalfedge) {
-            loopHalfedge = startHalfedge;
-            do {
-                vertices->insert(loopHalfedge->previousHalfedge->startVertex);
-                loopHalfedge = loopHalfedge->previousHalfedge->oppositeHalfedge;
-                if (nullptr == loopHalfedge)
-                    break;
-            } while (loopHalfedge != startHalfedge);
-            break;
-        }
-        loopHalfedge = loopHalfedge->oppositeHalfedge->nextHalfedge;
-    } while (loopHalfedge != startHalfedge);
+    iterateVertexHalfedges(vertex, [&](Halfedge *halfedge) {
+        vertices->insert(halfedge->nextHalfedge->startVertex);
+        return true;
+    });
 }
 
 size_t IsotropicHalfedgeMesh::vertexValence(Vertex *vertex, bool *isBoundary)
@@ -394,76 +350,70 @@ bool IsotropicHalfedgeMesh::testLengthSquaredAroundVertex(Vertex *vertex,
     const Vector3 &target, 
     double maxEdgeLengthSquared)
 {
-    const auto &startHalfedge = vertex->firstHalfedge;
-    if (nullptr == startHalfedge)
-        return false;
-    
-    Halfedge *loopHalfedge = startHalfedge;
-    do {
-        if ((loopHalfedge->nextHalfedge->startVertex->position - 
+    bool testSucceed = false;
+    iterateVertexHalfedges(vertex, [&](Halfedge *halfedge) {
+        if ((halfedge->nextHalfedge->startVertex->position - 
                 target).lengthSquared() > maxEdgeLengthSquared) {
-            return true;            
+            testSucceed = true;
+            return false;            
         }
-        if (nullptr == loopHalfedge->oppositeHalfedge) {
-            loopHalfedge = startHalfedge;
-            do {
-                if ((loopHalfedge->previousHalfedge->startVertex->position - 
-                        target).lengthSquared() > maxEdgeLengthSquared) {
-                    return true;            
-                }
-                loopHalfedge = loopHalfedge->previousHalfedge->oppositeHalfedge;
-                if (nullptr == loopHalfedge)
-                    break;
-            } while (loopHalfedge != startHalfedge);
-            break;
-        }
-        loopHalfedge = loopHalfedge->oppositeHalfedge->nextHalfedge;
-    } while (loopHalfedge != startHalfedge);
-    
-    return false;
+        return true;
+    });
+    return testSucceed;
 }
 
-void IsotropicHalfedgeMesh::pointerVertexToNewVertex(Vertex *vertex, Vertex *replacement)
+void IsotropicHalfedgeMesh::iterateVertexHalfedges(Vertex *vertex, std::function<bool(Halfedge *halfedge)> handler)
 {
     const auto &startHalfedge = vertex->firstHalfedge;
     if (nullptr == startHalfedge)
         return;
-    
+
     Halfedge *loopHalfedge = startHalfedge;
     do {
-        loopHalfedge->startVertex = replacement;
+        if (!handler(loopHalfedge))
+            return;
         if (nullptr == loopHalfedge->oppositeHalfedge) {
             loopHalfedge = startHalfedge;
-            do {
-                loopHalfedge->startVertex = replacement;
+            for (;;) {
                 loopHalfedge = loopHalfedge->previousHalfedge->oppositeHalfedge;
                 if (nullptr == loopHalfedge)
                     break;
-            } while (loopHalfedge != startHalfedge);
+                if (!handler(loopHalfedge))
+                    return;
+                if (loopHalfedge == startHalfedge)
+                    break;
+            }
             break;
         }
         loopHalfedge = loopHalfedge->oppositeHalfedge->nextHalfedge;
     } while (loopHalfedge != startHalfedge);
+}
+
+void IsotropicHalfedgeMesh::pointerVertexToNewVertex(Vertex *vertex, Vertex *replacement)
+{
+    iterateVertexHalfedges(vertex, [&](Halfedge *halfedge) {
+        halfedge->startVertex = replacement;
+        return true;
+    });
 }
 
 void IsotropicHalfedgeMesh::relaxVertex(Vertex *vertex)
 {
     if (vertex->_isBoundary || vertex->_valence <= 0)
         return;
-    
-    const auto &startHalfedge = vertex->firstHalfedge;
-    if (nullptr == startHalfedge)
-        return;
-    
+
     Vector3 position;
-    
-    Halfedge *loopHalfedge = startHalfedge;
-    do {
-        position += loopHalfedge->oppositeHalfedge->startVertex->position;
-        loopHalfedge = loopHalfedge->oppositeHalfedge->nextHalfedge;
-    } while (loopHalfedge != startHalfedge);
-    
-    position /= vertex->_valence;
+    size_t count = 0;
+    iterateVertexHalfedges(vertex, [&](Halfedge *halfedge) {
+        position += halfedge->nextHalfedge->startVertex->position;
+        ++count;
+        return true;
+    });
+
+    if (0 == count)
+        return;
+
+    position /= count;
     
     Vector3 projectedPosition = Vector3::projectPointOnLine(vertex->position, position, position + vertex->_normal);
     if (projectedPosition.containsNan() || projectedPosition.containsInf()) {
@@ -476,14 +426,14 @@ void IsotropicHalfedgeMesh::relaxVertex(Vertex *vertex)
 
 bool IsotropicHalfedgeMesh::flipEdge(Halfedge *halfedge)
 {
+    if (nullptr == halfedge->oppositeHalfedge)
+        return false;
+        
     Vertex *topVertex = halfedge->previousHalfedge->startVertex;
     Vertex *bottomVertex = halfedge->oppositeHalfedge->previousHalfedge->startVertex;
     
     Vertex *leftVertex = halfedge->startVertex;
     Vertex *rightVertex = halfedge->oppositeHalfedge->startVertex;
-    
-    //if (testVertexAround(topVertex, bottomVertex))
-    //    return false;
     
     bool isLeftBoundary = false;
     int leftValence = (int)vertexValence(leftVertex, &isLeftBoundary);
@@ -569,9 +519,6 @@ bool IsotropicHalfedgeMesh::collapseEdge(Halfedge *halfedge, double maxEdgeLengt
     
     if (bottomVertex->featured)
         return false;
-    
-    //if (testVertexAround(topVertex, bottomVertex))
-    //    return false;
     
     Vector3 collapseTo = (halfedge->startVertex->position +
         halfedge->nextHalfedge->startVertex->position) * 0.5;

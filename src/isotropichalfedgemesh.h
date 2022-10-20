@@ -22,6 +22,7 @@
 #ifndef ISOTROPIC_HALFEDGE_MESH_H
 #define ISOTROPIC_HALFEDGE_MESH_H
 #include <set>
+#include <functional>
 #include "vector3.h"
 
 class IsotropicHalfedgeMesh
@@ -136,8 +137,8 @@ private:
         double maxEdgeLengthSquared);
     void collectVerticesAroundVertex(Vertex *vertex,
         std::set<Vertex *> *vertices);
-    //bool testVertexAround(Vertex *vertex, Vertex *testVertex);
     void featureHalfedge(Halfedge *halfedge, double radians);
+    void iterateVertexHalfedges(Vertex *vertex, std::function<bool(Halfedge *halfedge)> handler);
 };
 
 #endif
