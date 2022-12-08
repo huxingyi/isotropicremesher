@@ -245,8 +245,8 @@ void IsotropicRemesher::projectVertices()
     for (IsotropicHalfedgeMesh::Vertex *vertex = m_halfedgeMesh->moveToNextVertex(nullptr); 
             nullptr != vertex;
             vertex = m_halfedgeMesh->moveToNextVertex(vertex)) {
-        //if (vertex->featured)
-        //    continue;
+        if (vertex->featured)
+            continue;
         
         const auto &startHalfedge = vertex->firstHalfedge;
         if (nullptr == startHalfedge)
